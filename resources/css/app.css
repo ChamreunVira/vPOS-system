@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@source '../views/**/*.blade.php';
+@source '../js/**/*.js';
+
+/*
+ * Design tokens. Everything is neutral (black & white) on purpose:
+ * change these variables to re-theme the whole kit.
+ */
+@theme {
+    --font-sans:
+        "Inter", "Noto Sans Khmer", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+    --color-canvas: #f5f5f5;
+    --color-surface: #ffffff;
+    --color-line: #e5e5e5;
+    --color-ink: #0a0a0a;
+    --color-ink-muted: #737373;
+}
+
+@layer base {
+    html {
+        @apply bg-canvas font-sans text-ink antialiased;
+    }
+    [x-cloak] {
+        display: none !important;
+    }
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-neutral-900;
+    }
+}
+
+@layer components {
+    /* Money and other figures use the mono face with fixed-width digits. */
+    .font-money {
+        @apply font-mono tabular-nums;
+    }
+}
+
+/* Print only the receipt (POS success screen and order details). */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #receipt,
+    #receipt * {
+        visibility: visible;
+    }
+    #receipt {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 80mm;
+        border: 0;
+        box-shadow: none;
+    }
+}
