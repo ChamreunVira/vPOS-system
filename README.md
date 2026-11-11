@@ -11,6 +11,7 @@ The initial release targets one store. The data model and service boundaries sho
 - [Overview](#overview)
 - [Key Capabilities](#key-capabilities)
 - [Architecture](#architecture)
+- [Database ERD](#database-erd)
 - [Technology Stack](#technology-stack)
 - [Getting Started](#getting-started)
 - [Quality and Security](#quality-and-security)
@@ -53,6 +54,52 @@ The following diagram is the proposed deployment view for review. It shows the b
 The application is currently designed as a server-rendered Laravel monolith. Blade renders the main pages, Alpine.js supports focused client-side interactions, and JSON endpoints serve POS-specific operations. Controllers remain thin; validation, authorisation, business actions, and persistence have separate responsibilities.
 
 See [System Architecture](docs/05-system-architecture.md) for layer responsibilities, security controls, performance guidance, and deployment recommendations.
+
+## Database ERD
+
+The ERD below shows the core relationships across access control, catalog, sales, purchasing, inventory, cash management, and finance. The detailed data dictionary, constraints, proposed fields, and column types are maintained in [Database Design](docs/04-database-design.md).
+
+```mermaid
+erDiagram
+	ROLES ||--o{ USERS : assigns
+	ROLES ||--o{ ROLE_PERMISSIONS : has
+	PERMISSIONS ||--o{ ROLE_PERMISSIONS : grants
+
+	CATEGORIES ||--o{ PRODUCTS : contains
+	UNITS ||--o{ PRODUCTS : measures
+	PRODUCTS ||--o{ PRODUCT_UNITS : offers
+	UNITS ||--o{ PRODUCT_UNITS : defines
+	UNITS ||--o{ ORDER_ITEMS : sold_in_unit
+	UNITS ||--o{ PURCHASE_ORDER_ITEMS : bought_in_unit
+
+	CUSTOMERS ||--o{ ORDERS : places
+	USERS ||--o{ ORDERS : processes
+	ORDERS ||--|{ ORDER_ITEMS : contains
+	PRODUCTS ||--o{ ORDER_ITEMS : sold_in
+	ORDERS ||--o{ PAYMENTS : receives
+	PAYMENT_METHODS ||--o{ PAYMENTS : uses
+
+	SUPPLIERS ||--o{ PURCHASE_ORDERS : supplies
+	USERS ||--o{ PURCHASE_ORDERS : creates
+	PURCHASE_ORDERS ||--|{ PURCHASE_ORDER_ITEMS : contains
+	PRODUCTS ||--o{ PURCHASE_ORDER_ITEMS : purchased
+
+	PRODUCTS ||--o{ STOCK_MOVEMENTS : tracks
+	USERS ||--o{ STOCK_MOVEMENTS : records
+	PURCHASE_ORDERS ||--o{ STOCK_MOVEMENTS : generates
+	ORDER_ITEMS ||--o{ STOCK_MOVEMENTS : generates
+
+	CASH_REGISTERS ||--o{ CASH_SESSIONS : contains
+	USERS ||--o{ CASH_SESSIONS : operates
+	CASH_SESSIONS ||--o{ CASH_MOVEMENTS : records
+	USERS ||--o{ CASH_MOVEMENTS : creates
+
+	EXPENSE_CATEGORIES ||--o{ EXPENSES : categorizes
+	USERS ||--o{ EXPENSES : creates
+	PAYMENT_METHODS ||--o{ EXPENSES : uses
+```
+
+**Review rule:** the database schema and [Database Design](docs/04-database-design.md) remain the source of truth. Update this diagram whenever a table or relationship changes.
 
 ## Technology Stack
 
