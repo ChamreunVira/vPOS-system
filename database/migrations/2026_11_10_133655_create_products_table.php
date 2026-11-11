@@ -15,13 +15,14 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->foreignId('category_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('unit_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('sku');
             $table->string('barcode')->nullable();
-            $table->decimal('cost', 10, 2);
-            $table->decimal('price', 10, 2);
-            $table->decimal('stock', 10, 2);
-            $table->decimal('min_stock', 10, 2);
+            $table->decimal('cost');
+            $table->decimal('price');
+            $table->decimal('stock');
+            $table->decimal('min_stock');
             $table->string('image');
             $table->enum('status', SoftDeleteStatus::all())->default(SoftDeleteStatus::Active->value);
             $table->timestamps();
