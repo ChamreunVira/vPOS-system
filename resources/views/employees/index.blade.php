@@ -11,9 +11,9 @@
                     @foreach ($employees as $employee)
                         <tr>
                             <td><span class="flex items-center gap-3"><x-ui.avatar :name="$employee['name']" size="sm" /><span><span class="block font-medium">{{ $employee['name'] }}</span><span class="text-xs text-ink-muted">{{ $employee['email'] }}</span></span></span></td>
-                            <td class="font-money text-neutral-600">{{ $employee['phone'] }}</td>
-                            <td><x-ui.badge :variant="$employee['role'] === 'Admin' ? 'solid' : 'soft'">{{ $employee['role'] }}</x-ui.badge></td>
-                            <td class="text-neutral-600">{{ $employee['last_login'] }}</td>
+                            <td class="font-money text-neutral-600">{{ $employee['phone'] ?? "N/A"}}</td>
+                            <td><x-ui.badge :variant="$employee->role?->name === 'admin' ? 'solid' : 'soft'">{{ $employee->role?->name ?? 'Unassigned' }}</x-ui.badge></td>
+                            <td class="text-neutral-600">{{ $employee['last_login'] ?? "N/A" }}</td>
                             <td><x-ui.status :status="$employee['status']" /></td>
                             <td class="text-right">
                                 <div class="flex justify-end gap-1">

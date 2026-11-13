@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -11,18 +10,11 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
-use Illuminate\Routing\Router;
+use App\Http\Controllers\SupplierController;
 use Illuminate\Support\Facades\Route;
-
-// Route::get('/', function () {
-//     return view('welcome');
-// });
-
-// Route::get('/dashboard', function () {
-//     return view('dashboard');
-// })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -30,9 +22,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-
 Route::prefix('admin')->group(function () {
-    // Route::get('/', '/dashboard');
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('pos', [PosController::class, 'index'])->name('pos.index');
@@ -48,6 +38,7 @@ Route::prefix('admin')->group(function () {
     Route::post('orders/{order}/refund', [OrderController::class, 'refund'])->name('orders.refund');
 
     Route::resource('customers', CustomerController::class);
+    Route::resource('suppliers', SupplierController::class)->except(['show']);
     Route::resource('expenses', ExpenseController::class)->only(['index', 'store', 'update', 'destroy']);
 
     Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
@@ -61,4 +52,4 @@ Route::prefix('admin')->group(function () {
     Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
 })->middleware(['auth', 'verified']);
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

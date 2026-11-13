@@ -2,9 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-class Permission extends Model
-{
-    //
-}
+#[Fillable(['module', 'action'])]
+class Permission extends Model {}

@@ -11,6 +11,7 @@
             ['Products', 'products.index', 'package', 'products.*'],
             ['Categories', 'categories.index', 'tags', 'categories.*'],
             ['Inventory', 'inventory.index', 'layers', 'inventory.*'],
+            ['Suppliers', 'suppliers.index', 'truck', 'suppliers.*'],
         ],
         'Finance' => [
             ['Expenses', 'expenses.index', 'banknote', 'expenses.*'],

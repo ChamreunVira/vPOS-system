@@ -19,7 +19,7 @@
             </x-ui.card>
             <x-ui.card title="Access">
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <x-form.select label="Role" name="role" :options="$roles" :value="$employee['role'] ?? 'Cashier'" hint="Roles control which modules this person can use." />
+                    <x-form.select label="Role" name="role_id" :options="$roles" :value="$employee['role_id'] ?? null" hint="Roles control which modules this person can use." />
                     <x-form.input label="Checkout PIN" name="pin" type="password" inputmode="numeric" maxlength="6" hint="Used to unlock the POS." />
                     <x-form.input class="sm:col-span-2" label="Password" name="password" type="password" :hint="$isEdit ? 'Leave blank to keep the current password.' : null" />
                     <div class="sm:col-span-2"><x-form.toggle name="status" label="Active" hint="Inactive employees cannot sign in." :checked="($employee['status'] ?? 'active') === 'active'" /></div>
