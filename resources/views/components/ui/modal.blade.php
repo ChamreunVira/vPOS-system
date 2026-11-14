@@ -12,10 +12,10 @@
          class="relative flex max-h-full w-full flex-col rounded-xl bg-white shadow-xl {{ ['sm' => 'max-w-sm', 'md' => 'max-w-lg', 'lg' => 'max-w-2xl'][$size] ?? 'max-w-lg' }}">
         <header class="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
             <div>
-                <h2 class="text-base font-semibold">{{ $title }}</h2>
-                @if ($description)<p class="mt-0.5 text-sm text-ink-muted">{{ $description }}</p>@endif
+                <h2 class="text-base font-semibold">{{ __($title) }}</h2>
+                @if ($description)<p class="mt-0.5 text-sm text-ink-muted">{{ __($description) }}</p>@endif
             </div>
-            <button type="button" @click="show = false" class="rounded-lg p-1 text-neutral-500 hover:bg-neutral-100" aria-label="Close"><x-ui.icon name="x" class="size-5" /></button>
+            <button type="button" @click="show = false" class="rounded-lg p-1 text-neutral-500 hover:bg-neutral-100" aria-label="{{ __('Close') }}"><x-ui.icon name="x" class="size-5" /></button>
         </header>
         <div class="overflow-y-auto px-5 py-5">{{ $slot }}</div>
         @isset($footer)

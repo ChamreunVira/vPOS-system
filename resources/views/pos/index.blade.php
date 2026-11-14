@@ -15,19 +15,20 @@
         {{-- ============ Left: catalogue ============ --}}
         <section class="flex min-h-0 flex-1 flex-col">
             <header class="flex flex-wrap items-center gap-3 border-b border-line bg-white px-4 py-3">
-                <x-ui.button :href="route('dashboard')" variant="ghost" size="sm" icon="arrow-left">Dashboard</x-ui.button>
+                <x-ui.button :href="route('dashboard')" variant="ghost" size="sm" icon="arrow-left">{{ __('Dashboard') }}</x-ui.button>
                 <div class="leading-tight">
                     <p class="text-sm font-semibold">{{ config('vpos.store') }}</p>
                     <p class="text-xs text-ink-muted">{{ config('vpos.register') }} · Sreymao Lim</p>
                 </div>
                 <div class="relative ml-auto w-full sm:w-72">
                     <x-ui.icon name="search" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                    <input type="search" x-model="query" placeholder="Search products" class="h-10 w-full rounded-lg border border-neutral-300 pl-9 pr-3 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900">
+                    <input type="search" x-model="query" placeholder="{{ __('Search products') }}" class="h-10 w-full rounded-lg border border-neutral-300 pl-9 pr-3 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900">
                 </div>
                 <form @submit.prevent="scanBarcode()" class="relative w-full sm:w-64">
                     <x-ui.icon name="scan" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                    <input x-ref="barcode" x-model="barcode" type="text" inputmode="numeric" autofocus placeholder="Scan barcode (F2)" class="font-money h-10 w-full rounded-lg border border-neutral-300 pl-9 pr-3 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900">
+                    <input x-ref="barcode" x-model="barcode" type="text" inputmode="numeric" autofocus placeholder="{{ __('Scan barcode (F2)') }}" class="font-money h-10 w-full rounded-lg border border-neutral-300 pl-9 pr-3 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900">
                 </form>
+                <x-layout.language-switcher />
             </header>
 
             <div class="flex gap-2 overflow-x-auto border-b border-line bg-white px-4 py-2.5">

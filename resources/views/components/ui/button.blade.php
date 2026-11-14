@@ -1,6 +1,11 @@
 @props(['variant' => 'primary', 'size' => 'md', 'href' => null, 'icon' => null, 'type' => 'button'])
 
 @php
+    $plainText = trim(strip_tags((string) $slot));
+    $translatedText = $plainText !== '' ? __($plainText) : null;
+    $hasTranslation = $translatedText !== null
+        && $translatedText !== $plainText
+        && ! str_contains((string) $slot, '<');
     $classes = [
         'inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap transition',
         'disabled:pointer-events-none disabled:opacity-40',
@@ -21,11 +26,11 @@
 @if ($href)
     <a href="{{ $href }}" {{ $attributes->class($classes) }}>
         @if ($icon)<x-ui.icon :name="$icon" />@endif
-        {{ $slot }}
+        @if ($hasTranslation){{ $translatedText }}@else{{ $slot }}@endif
     </a>
 @else
     <button type="{{ $type }}" {{ $attributes->class($classes) }}>
         @if ($icon)<x-ui.icon :name="$icon" />@endif
-        {{ $slot }}
+        @if ($hasTranslation){{ $translatedText }}@else{{ $slot }}@endif
     </button>
 @endif

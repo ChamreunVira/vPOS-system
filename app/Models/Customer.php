@@ -2,9 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-class Customer extends Model
-{
-    //
-}
+#[Fillable(['name', 'phone', 'email', 'address', 'notes', 'status'])]
+class Customer extends Model {}

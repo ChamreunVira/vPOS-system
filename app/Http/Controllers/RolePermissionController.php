@@ -2,64 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\RolePermission;
+use App\Models\Role;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class RolePermissionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function updateMatrix(Request $request): RedirectResponse
     {
-        //
-    }
+        $validated = $request->validate([
+            'permissions' => ['sometimes', 'array'],
+            'permissions.*' => ['array'],
+            'permissions.*.*' => ['integer', Rule::exists('permissions', 'id')],
+        ]);
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+        DB::transaction(function () use ($validated): void {
+            $selectedPermissions = $validated['permissions'] ?? [];
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+            foreach (Role::query()->get() as $role) {
+                $role->permissions()->sync($selectedPermissions[$role->id] ?? []);
+            }
+        });
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(RolePermission $rolePermission)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(RolePermission $rolePermission)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, RolePermission $rolePermission)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(RolePermission $rolePermission)
-    {
-        //
+        return redirect()->route('employees.index')->with('success', 'Role permissions updated.');
     }
 }

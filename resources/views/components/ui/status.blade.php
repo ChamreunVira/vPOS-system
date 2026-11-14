@@ -8,7 +8,7 @@
         'refunded', 'partially_refunded', 'return' => 'dashed',
         default => 'soft',
     };
-    $text = $label ?? ucfirst(str_replace('_', ' ', $status));
+    $text = __($label ?? ucfirst(str_replace('_', ' ', $status)));
 @endphp
 
 <x-ui.badge :variant="$variant" {{ $attributes }}>{{ $text }}</x-ui.badge>

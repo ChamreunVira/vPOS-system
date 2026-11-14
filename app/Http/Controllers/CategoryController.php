@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\RespondsWithDemoNotice;
-use App\Support\MockData;
+use App\Models\Category;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -12,12 +12,24 @@ class CategoryController extends Controller
 
     public function index()
     {
-        return view('categories.index', ['categories' => MockData::categories()]);
+        $categories = Category::all();
+
+        return view('categories.index', ['categories' => $categories]);
     }
 
     public function store(Request $request)
     {
-        return $this->demo('Category created');
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'description' => ['required', 'string', 'max:255'],
+        ]);
+
+        Category::create([
+            'name' => $data['name'],
+            'description' => $data['description'],
+        ]);
+
+        return redirect()->route('categories.index')->with('status', 'Category created.');
     }
 
     public function update(Request $request, string $category)

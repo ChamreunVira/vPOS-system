@@ -2,64 +2,52 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\SoftDeleteStatus;
 use App\Models\Unit;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class UnitController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): View
     {
-        //
+        $units = Unit::query()->withCount(['productUnits as products_count'])->orderBy('name')->get();
+
+        return view('units.index', ['units' => $units]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $this->validatedData($request);
+
+        Unit::create($data);
+
+        return redirect()->route('units.index')->with('status', 'Unit created.');
+    }
+
+    public function update(Request $request, Unit $unit): RedirectResponse
+    {
+        $unit->update($this->validatedData($request));
+
+        return redirect()->route('units.index')->with('status', 'Unit updated.');
     }
 
     /**
-     * Show the form for creating a new resource.
+     * @return array{name: string, abbreviation: string, type: string, allow_decimal: bool, status: string}
      */
-    public function create()
+    private function validatedData(Request $request): array
     {
-        //
-    }
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'abbreviation' => ['required', 'string', 'max:255'],
+            'type' => ['required', 'string', 'max:255'],
+            'allow_decimal' => ['required', 'boolean'],
+            'status' => ['required', 'string', 'in:'.implode(',', SoftDeleteStatus::all())],
+        ]);
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+        $data['allow_decimal'] = $request->boolean('allow_decimal');
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Unit $unit)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Unit $unit)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Unit $unit)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Unit $unit)
-    {
-        //
+        return $data;
     }
 }

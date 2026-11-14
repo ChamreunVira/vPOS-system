@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\RespondsWithDemoNotice;
+use App\Models\Customer;
 use App\Support\MockData;
 use Illuminate\Http\Request;
 
@@ -12,7 +13,9 @@ class CustomerController extends Controller
 
     public function index()
     {
-        return view('customers.index', ['customers' => MockData::customers()]);
+        $customers = Customer::all();
+
+        return view('customers.index', ['customers' => $customers]);
     }
 
     public function create()
@@ -22,7 +25,23 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
-        return $this->demo('Customer created');
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'lowercase'],
+            'address' => ['required', 'string', 'max:255'],
+            'notes' => ['required', 'string', 'max:255'],
+        ]);
+
+        Customer::Create([
+            'name' => $data['name'],
+            'phone' => $data['phone'],
+            'email' => $data['email'],
+            'address' => $data['address'],
+            'notes' => $data['notes'],
+        ]);
+
+        return redirect()->route('customers.index')->with('success', 'Customer created.');
     }
 
     public function show(string $customer)

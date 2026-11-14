@@ -6,14 +6,17 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\UnitController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
@@ -30,6 +33,7 @@ Route::prefix('admin')->group(function () {
 
     Route::resource('products', ProductController::class);
     Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('units', UnitController::class)->only(['index', 'store', 'update']);
 
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::post('inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
@@ -46,6 +50,8 @@ Route::prefix('admin')->group(function () {
 
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
 
+    Route::post('language', [LocaleController::class, 'update'])->name('locale.update');
+    Route::put('roles/permissions', [RolePermissionController::class, 'updateMatrix'])->name('roles.permissions.update');
     Route::resource('employees', EmployeeController::class)->except(['show']);
 
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');

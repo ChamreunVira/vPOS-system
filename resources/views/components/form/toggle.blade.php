@@ -3,8 +3,8 @@
 {{-- Posts "1" when on and "0" when off. Usage: <x-form.toggle name="status" label="Active" :checked="true" /> --}}
 <label class="flex cursor-pointer items-start justify-between gap-4">
     <span>
-        <span class="block text-sm font-medium text-neutral-900">{{ $label }}</span>
-        @if ($hint)<span class="block text-xs text-ink-muted">{{ $hint }}</span>@endif
+        <span class="block text-sm font-medium text-neutral-900">{{ __($label) }}</span>
+        @if ($hint)<span class="block text-xs text-ink-muted">{{ __($hint) }}</span>@endif
     </span>
     <input type="hidden" name="{{ $name }}" value="0">
     <span class="relative inline-flex shrink-0">

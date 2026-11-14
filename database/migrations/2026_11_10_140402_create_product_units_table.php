@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->foreignId('unit_id')->constrained()->cascadeOnDelete();
             $table->decimal('conversion_factor', 14, 4);
-            $table->string('barcode');
+            $table->string('allow_decimal_barcode');
             $table->decimal('price');
             $table->timestamps();
         });

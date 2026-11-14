@@ -37,6 +37,20 @@ final class MockData
         ]);
     }
 
+    public static function units(): Collection
+    {
+        return collect([
+            ['id' => 1, 'name' => 'Piece', 'abbreviation' => 'pc', 'type' => 'Count', 'allow_decimal' => false, 'products_count' => 42, 'status' => 'active'],
+            ['id' => 2, 'name' => 'Kilogram', 'abbreviation' => 'kg', 'type' => 'Weight', 'allow_decimal' => true, 'products_count' => 8, 'status' => 'active'],
+            ['id' => 3, 'name' => 'Gram', 'abbreviation' => 'g', 'type' => 'Weight', 'allow_decimal' => true, 'products_count' => 5, 'status' => 'active'],
+            ['id' => 4, 'name' => 'Liter', 'abbreviation' => 'L', 'type' => 'Volume', 'allow_decimal' => true, 'products_count' => 6, 'status' => 'active'],
+            ['id' => 5, 'name' => 'Milliliter', 'abbreviation' => 'ml', 'type' => 'Volume', 'allow_decimal' => true, 'products_count' => 11, 'status' => 'active'],
+            ['id' => 6, 'name' => 'Pack', 'abbreviation' => 'pk', 'type' => 'Packaging', 'allow_decimal' => false, 'products_count' => 9, 'status' => 'active'],
+            ['id' => 7, 'name' => 'Box', 'abbreviation' => 'box', 'type' => 'Packaging', 'allow_decimal' => false, 'products_count' => 4, 'status' => 'active'],
+            ['id' => 8, 'name' => 'Bottle', 'abbreviation' => 'btl', 'type' => 'Packaging', 'allow_decimal' => false, 'products_count' => 0, 'status' => 'inactive'],
+        ]);
+    }
+
     public static function products(): Collection
     {
         // id, name, sku, barcode, category_id, cost, price, stock, min stock, emoji, units sold this month

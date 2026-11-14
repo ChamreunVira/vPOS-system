@@ -1,5 +1,5 @@
 <x-layouts.app title="Dashboard">
-    <x-ui.page-header title="Good day, Rithy." :subtitle="now()->format('l, F j').' · Here is how '.config('vpos.store').' is doing.'">
+    <x-ui.page-header title="Good day, Rithy." :subtitle="now()->locale(app()->getLocale())->translatedFormat('l, F j').' · '.__('Here is how :store is doing.', ['store' => config('vpos.store')])">
         <x-ui.button :href="route('pos.index')" icon="cart" size="lg">Start a sale</x-ui.button>
     </x-ui.page-header>
 
