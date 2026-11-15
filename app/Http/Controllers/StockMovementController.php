@@ -2,94 +2,53 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Inventory\RecordStockMovementAction;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
-use App\Models\StockMovement;
-use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class StockMovementController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of stock movements.
      */
-    public function index()
+    public function index(Request $request): View|RedirectResponse
     {
-        $stockMovements = StockMovement::with(['product', 'user', 'purchaseOrder', 'orderItem'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
-        return view('inventory.index', compact('stockMovements'));
+        return redirect()->route('inventory.index', ['tab' => 'movements']);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Store a newly created stock movement.
      */
-    public function create()
+    public function store(Request $request, RecordStockMovementAction $recordStockMovement): RedirectResponse
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $data = $$request->validate([
-            'product_id' => ['required', 'integer', 'exists' . Product::class . ',id'],
-            'user_id' => ['required', 'integer', 'exists' . User::class . ',id'],
-            'purchase_order_id' => ['required', 'integer', 'exists' . PurchaseOrder::class . ',id'],
-            'order_item_id' => ['required', 'integer', 'exists' . OrderItem::class . ',id'],
+        $data = $request->validate([
+            'product_id' => ['required', 'integer', 'exists:products,id'],
             'type' => ['required', 'string'],
             'quantity' => ['required', 'numeric'],
-            'balance' => ['required', 'numeric'],
-            'reference' => ['required', 'numeric'],
-            'note' => ['required', 'string'],
+            'reference' => ['nullable', 'string', 'max:255'],
+            'note' => ['nullable', 'string', 'max:500'],
+            'purchase_order_id' => ['nullable', 'integer', 'exists:purchase_orders,id'],
+            'order_item_id' => ['nullable', 'integer', 'exists:order_items,id'],
         ]);
 
-        StockMovement::create([
-            'product_id' => $data['product_id'],
-            'user_id' => $data['user_id'],
-            'purchase_order_id' => $data['purchase_order_id'],
-            'order_item_id' => $data['order_item_id'],
-            'type' => $data['type'],
-            'quantity' => $data['quantity'],
-            'balance' => $data['balance'],
-            'reference' => $data['reference'],
-            'note' => $data['note']
-        ]);
-    }
+        $product = Product::findOrFail($data['product_id']);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(StockMovement $stockMovement)
-    {
-        //
-    }
+        $recordStockMovement->execute(
+            product: $product,
+            type: $data['type'],
+            quantity: $data['quantity'],
+            user: $request->user(),
+            reference: $data['reference'] ?? null,
+            note: $data['note'] ?? null,
+            purchaseOrder: isset($data['purchase_order_id']) ? PurchaseOrder::find($data['purchase_order_id']) : null,
+            orderItem: isset($data['order_item_id']) ? OrderItem::find($data['order_item_id']) : null,
+        );
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(StockMovement $stockMovement)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, StockMovement $stockMovement)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(StockMovement $stockMovement)
-    {
-        //
+        return redirect()->route('inventory.index', ['tab' => 'movements'])
+            ->with('success', 'Stock movement recorded successfully.');
     }
 }

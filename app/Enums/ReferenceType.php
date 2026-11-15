@@ -4,9 +4,9 @@ namespace App\Enums;
 
 enum ReferenceType: string
 {
-    case Purchase = "purchase";
-    case Sale = "sale";
-    case Adjustment = "adjustment";
+    case Purchase = 'purchase';
+    case Sale = 'sale';
+    case Adjustment = 'adjustment';
 
     public static function all(): array
     {

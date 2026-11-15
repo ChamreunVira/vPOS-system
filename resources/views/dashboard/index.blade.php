@@ -1,5 +1,5 @@
 <x-layouts.app title="Dashboard">
-    <x-ui.page-header title="Good day, Rithy." :subtitle="now()->locale(app()->getLocale())->translatedFormat('l, F j').' · '.__('Here is how :store is doing.', ['store' => config('vpos.store')])">
+    <x-ui.page-header :title="'Good day, ' . (auth()->user()?->name ? explode(' ', auth()->user()->name)[0] : 'there') . '.'" :subtitle="now()->locale(app()->getLocale())->translatedFormat('l, F j') . ' · ' . __('Here is how :store is doing.', ['store' => config('vpos.store', config('app.name', 'vPOS'))])">
         <x-ui.button :href="route('pos.index')" icon="cart" size="lg">Start a sale</x-ui.button>
     </x-ui.page-header>
 
@@ -9,7 +9,7 @@
         <x-ui.stat-card label="Total revenue" icon="trending-up" :delta="$stats['total_revenue_delta']"><x-ui.money :amount="$stats['total_revenue']" /></x-ui.stat-card>
         <x-ui.stat-card label="Estimated profit" icon="wallet" :delta="$stats['estimated_profit_delta']"><x-ui.money :amount="$stats['estimated_profit']" /></x-ui.stat-card>
         <x-ui.stat-card label="Total expenses" icon="banknote" :delta="$stats['total_expenses_delta']"><x-ui.money :amount="$stats['total_expenses']" /></x-ui.stat-card>
-        <x-ui.stat-card label="Total products" icon="package" :hint="'Across '.$activeCategories.' active categories'">{{ $totalProducts }}</x-ui.stat-card>
+        <x-ui.stat-card label="Total products" icon="package" :hint="'Across ' . $activeCategories . ' active categories'">{{ $totalProducts }}</x-ui.stat-card>
         <x-ui.stat-card label="Low-stock products" icon="alert" hint="At or below the minimum level">{{ $lowStockProducts->count() }}</x-ui.stat-card>
     </div>
 
@@ -19,7 +19,7 @@
             <div x-data="{ range: 'week' }">
                 <div class="mb-4 flex w-full rounded-lg bg-neutral-100 p-1 sm:inline-flex sm:w-auto">
                     @foreach (['today' => 'Today', 'week' => 'This week', 'month' => 'This month'] as $key => $label)
-                        <button type="button" @click="range = '{{ $key }}'" :class="range === '{{ $key }}' ? 'bg-white shadow-sm' : 'text-neutral-500'" class="min-w-0 flex-1 rounded-md px-2 py-1.5 text-center text-xs font-medium leading-5 sm:flex-initial sm:whitespace-nowrap sm:px-3 sm:py-1 sm:text-sm">{{ $label }}</button>
+                        <button type="button" @click="range = '{{ $key }}'" :class="range === '{{ $key }}' ? 'bg-white shadow-sm font-semibold' : 'text-neutral-500'" class="min-w-0 flex-1 rounded-md px-2 py-1.5 text-center text-xs font-medium leading-5 sm:flex-initial sm:whitespace-nowrap sm:px-3 sm:py-1 sm:text-sm">{{ $label }}</button>
                     @endforeach
                 </div>
                 @foreach ($charts as $key => $series)
@@ -35,16 +35,22 @@
         {{-- Best sellers --}}
         <x-ui.card title="Best-selling products" description="Units sold this month">
             <ol class="space-y-4">
-                @foreach ($bestSellers as $product)
+                @forelse ($bestSellers as $product)
                     <li class="flex items-center gap-3">
                         <x-ui.product-thumb :product="$product" size="sm" />
                         <div class="min-w-0 flex-1">
-                            <a href="{{ route('products.show', $product['id']) }}" class="block truncate text-sm font-medium hover:underline">{{ $product['name'] }}</a>
+                            @if (!empty($product['id']))
+                                <a href="{{ route('products.show', $product['id']) }}" class="block truncate text-sm font-medium hover:underline">{{ $product['name'] }}</a>
+                            @else
+                                <span class="block truncate text-sm font-medium">{{ $product['name'] }}</span>
+                            @endif
                             <p class="text-xs text-ink-muted">{{ $product['category'] }}</p>
                         </div>
-                        <span class="font-money shrink-0 whitespace-nowrap text-sm">{{ number_format($product['sold']) }}</span>
+                        <span class="font-money shrink-0 whitespace-nowrap text-sm font-semibold">{{ number_format($product['sold']) }}</span>
                     </li>
-                @endforeach
+                @empty
+                    <li class="py-6 text-center text-xs text-neutral-500">No products sold yet.</li>
+                @endforelse
             </ol>
         </x-ui.card>
     </div>
@@ -54,30 +60,39 @@
             <x-slot:actions><x-ui.button :href="route('orders.index')" variant="ghost" size="sm">View all</x-ui.button></x-slot:actions>
             <x-ui.table class="[&_table]:min-w-[600px]">
                 <x-slot:head><tr><th>Sale</th><th>Customer</th><th>Payment</th><th>Status</th><th class="text-right">Total</th></tr></x-slot:head>
-                @foreach ($recentOrders as $order)
+                @forelse ($recentOrders as $order)
                     <tr>
-                        <td><a href="{{ route('orders.show', $order['id']) }}" class="font-medium hover:underline">{{ $order['number'] }}</a><p class="text-xs text-ink-muted">{{ $order['placed_at']->format('g:i A') }}</p></td>
-                        <td>{{ $order['customer'] }}</td>
-                        <td class="capitalize">{{ $order['method'] === 'khqr' ? 'KHQR' : $order['method'] }}</td>
+                        <td>
+                            <a href="{{ route('orders.show', $order['id']) }}" class="font-medium hover:underline">{{ $order['number'] }}</a>
+                            <p class="text-xs text-ink-muted">{{ $order['placed_at']?->format('g:i A') ?? '—' }}</p>
+                        </td>
+                        <td>{{ $order->customer_name }}</td>
+                        <td class="capitalize">{{ $order['method'] === 'khqr' ? 'KHQR' : ucfirst($order['method'] ?? 'cash') }}</td>
                         <td><x-ui.status :status="$order['status']" /></td>
-                        <td class="text-right"><x-ui.money :amount="$order['total']" /></td>
+                        <td class="text-right font-medium"><x-ui.money :amount="$order['total']" /></td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="5" class="px-5 py-8 text-center text-xs text-neutral-500">No transactions recorded yet.</td>
+                    </tr>
+                @endforelse
             </x-ui.table>
         </x-ui.card>
 
         <x-ui.card title="Needs attention" description="Restock these soon">
             <ul class="space-y-3">
-                @foreach ($lowStockProducts->take(5) as $product)
+                @forelse ($lowStockProducts->take(5) as $product)
                     <li class="flex items-center gap-3">
                         <x-ui.product-thumb :product="$product" size="sm" />
                         <div class="min-w-0 flex-1">
                             <p class="truncate text-sm font-medium">{{ $product['name'] }}</p>
                             <p class="text-xs text-ink-muted">{{ $product['stock'] }} left · reorder at {{ $product['min_stock'] }}</p>
                         </div>
-                        <x-ui.status :status="\App\Support\MockData::stockLevel($product)" />
+                        <x-ui.status :status="$product['stock_level'] ?? 'low_stock'" />
                     </li>
-                @endforeach
+                @empty
+                    <li class="py-6 text-center text-xs text-neutral-500">All products have sufficient stock.</li>
+                @endforelse
             </ul>
             <x-ui.button :href="route('inventory.index')" variant="secondary" class="mt-5 w-full">Review inventory</x-ui.button>
         </x-ui.card>

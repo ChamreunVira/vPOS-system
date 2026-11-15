@@ -11,7 +11,7 @@ enum SoftDeleteStatus: string
     {
         return [
             SoftDeleteStatus::Active->value,
-            SoftDeleteStatus::Inactive->value
+            SoftDeleteStatus::Inactive->value,
         ];
     }
 }

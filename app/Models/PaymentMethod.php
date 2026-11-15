@@ -6,6 +6,4 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable(['name', 'code', 'is_enable'])]
-class PaymentMethod extends Model
-{
-}
+class PaymentMethod extends Model {}

@@ -30,7 +30,7 @@ class PosController extends Controller
             ->where('status', 'active')
             ->orderBy('name')
             ->get()
-            ->map(fn(Product $product): array => [
+            ->map(fn (Product $product): array => [
                 'id' => $product->id,
                 'name' => $product->name,
                 'sku' => $product->sku ?? '',
@@ -84,10 +84,10 @@ class PosController extends Controller
         $receipt = DB::transaction(function () use ($data, $cashierId): array {
             $productIds = collect($data['items'])
                 ->pluck('product_id')
-                ->map(fn($id): int => (int) $id)
+                ->map(fn ($id): int => (int) $id)
                 ->sort()
                 ->values();
-                
+
             $products = Product::query()
                 ->with('unit')
                 ->whereIn('id', $productIds)
@@ -132,13 +132,13 @@ class PosController extends Controller
 
                 if (! $product->unit?->allow_decimal && floor($quantity) !== $quantity) {
                     throw ValidationException::withMessages([
-                        'items' => $product->name . ' must be sold in whole units.',
+                        'items' => $product->name.' must be sold in whole units.',
                     ]);
                 }
 
                 if ($quantity > (float) $product->stock) {
                     throw ValidationException::withMessages([
-                        'items' => 'There is not enough stock for ' . $product->name . '. Refresh the sale and try again.',
+                        'items' => 'There is not enough stock for '.$product->name.'. Refresh the sale and try again.',
                     ]);
                 }
 
@@ -181,7 +181,7 @@ class PosController extends Controller
             $now = now();
 
             $order = Order::create([
-                'order_number' => 'pending-' . Str::ulid(),
+                'order_number' => 'pending-'.Str::ulid(),
                 'customer_id' => $customer?->id,
                 'cashier_id' => $cashierId,
                 'status' => 'completed',
@@ -193,7 +193,7 @@ class PosController extends Controller
                 'total' => $total,
                 'place_at' => $now,
             ]);
-            $orderNumber = 'INV-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT);
+            $orderNumber = 'INV-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT);
             $order->update(['order_number' => $orderNumber]);
 
             $receiptLines = [];
@@ -227,7 +227,7 @@ class PosController extends Controller
                     'quantity' => -$quantity,
                     'balance' => $balance,
                     'reference' => $order->id,
-                    'note' => 'Point of sale ' . $orderNumber,
+                    'note' => 'Point of sale '.$orderNumber,
                 ]);
 
                 $receiptLines[] = [
@@ -245,7 +245,7 @@ class PosController extends Controller
                 'payment_method_id' => $paymentMethod->id,
                 'amount' => $total,
                 'refunded_amount' => 0,
-                'reference' => 'PAY-' . $order->id,
+                'reference' => 'PAY-'.$order->id,
                 'status' => 'paid',
                 'paid_at' => $now,
             ]);

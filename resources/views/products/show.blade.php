@@ -1,5 +1,6 @@
 <x-layouts.app :title="$product->name">
     <x-ui.page-header :title="$product->name" :subtitle="($product->category?->name ?? 'Uncategorized').' · '.$product->sku" :back="route('products.index')">
+        <x-ui.button :href="route('inventory.index', ['tab' => 'movements', 'movement_product_id' => $product->id])" variant="secondary" icon="layers">Stock history</x-ui.button>
         <x-ui.button :href="route('products.edit', $product)" icon="pencil">Edit product</x-ui.button>
     </x-ui.page-header>
 

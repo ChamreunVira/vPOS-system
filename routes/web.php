@@ -32,19 +32,24 @@ Route::prefix('admin')->group(function () {
     Route::post('pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
 
     Route::resource('products', ProductController::class);
+    Route::get('products/{product}/movements', [InventoryController::class, 'productMovements'])->name('products.movements');
     Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('units', UnitController::class)->only(['index', 'store', 'update']);
 
-    // Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::post('inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
+    Route::get('inventory/export', [InventoryController::class, 'export'])->name('inventory.export');
 
+    Route::get('orders/export', [OrderController::class, 'export'])->name('orders.export');
     Route::resource('orders', OrderController::class)->only(['index', 'show']);
     Route::post('orders/{order}/refund', [OrderController::class, 'refund'])->name('orders.refund');
+    Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+    Route::get('orders/{order}/receipt', [OrderController::class, 'receipt'])->name('orders.receipt');
 
     Route::resource('customers', CustomerController::class);
     Route::resource('suppliers', SupplierController::class)->except(['show']);
     Route::resource('expenses', ExpenseController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('expenses/export', [ExpenseController::class, 'export'])->name('expenses.export');
 
     Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::post('payments/cash-movement', [PaymentController::class, 'cashMovement'])->name('payments.cash-movement');
@@ -59,4 +64,4 @@ Route::prefix('admin')->group(function () {
     Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
 })->middleware(['auth', 'verified']);
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

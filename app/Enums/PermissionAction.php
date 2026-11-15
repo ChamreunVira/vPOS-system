@@ -10,14 +10,13 @@ enum PermissionAction: string
     case Delete = 'delete';
     case Refund = 'refund';
 
-
     public static function all()
     {
         return [
             PermissionAction::View->value,
             PermissionAction::Create->value,
             PermissionAction::Update->value,
-            PermissionAction::Delete->value
+            PermissionAction::Delete->value,
         ];
     }
 }
