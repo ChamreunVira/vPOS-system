@@ -11,8 +11,8 @@ use App\Models\Product;
 use App\Models\StockMovement;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -20,6 +20,9 @@ use Illuminate\View\View;
 
 class PosController extends Controller
 {
+    /**
+     * Display the point of sale page.
+     */
     public function index(): View
     {
         $products = Product::query()
@@ -27,7 +30,7 @@ class PosController extends Controller
             ->where('status', 'active')
             ->orderBy('name')
             ->get()
-            ->map(fn (Product $product): array => [
+            ->map(fn(Product $product): array => [
                 'id' => $product->id,
                 'name' => $product->name,
                 'sku' => $product->sku ?? '',
@@ -36,7 +39,11 @@ class PosController extends Controller
                 'price' => (float) $product->price,
                 'stock' => (float) $product->stock,
                 'min_stock' => (float) $product->min_stock,
+                'allow_decimal' => (bool) $product->unit?->allow_decimal,
                 'status' => $product->status,
+                'image' => $product->image
+                    ? (str_starts_with($product->image, 'http') ? $product->image : Storage::disk('public')->url($product->image))
+                    : null,
                 'emoji' => '🛒',
             ])
             ->values();
@@ -54,6 +61,12 @@ class PosController extends Controller
 
     public function checkout(Request $request): JsonResponse
     {
+        $cashierId = $request->user()?->getAuthIdentifier();
+
+        if ($cashierId === null) {
+            abort(401);
+        }
+
         $paymentMethods = config('vpos.payment_methods', ['cash']);
         $discountOptions = config('vpos.discount_options', [0]);
 
@@ -68,8 +81,13 @@ class PosController extends Controller
             'amount_received' => ['required_if:payment_method,cash', 'nullable', 'numeric', 'min:0'],
         ]);
 
-        $receipt = DB::transaction(function () use ($data): array {
-            $productIds = collect($data['items'])->pluck('product_id')->map(fn ($id): int => (int) $id)->sort()->values();
+        $receipt = DB::transaction(function () use ($data, $cashierId): array {
+            $productIds = collect($data['items'])
+                ->pluck('product_id')
+                ->map(fn($id): int => (int) $id)
+                ->sort()
+                ->values();
+                
             $products = Product::query()
                 ->with('unit')
                 ->whereIn('id', $productIds)
@@ -114,13 +132,13 @@ class PosController extends Controller
 
                 if (! $product->unit?->allow_decimal && floor($quantity) !== $quantity) {
                     throw ValidationException::withMessages([
-                        'items' => $product->name.' must be sold in whole units.',
+                        'items' => $product->name . ' must be sold in whole units.',
                     ]);
                 }
 
                 if ($quantity > (float) $product->stock) {
                     throw ValidationException::withMessages([
-                        'items' => 'There is not enough stock for '.$product->name.'. Refresh the sale and try again.',
+                        'items' => 'There is not enough stock for ' . $product->name . '. Refresh the sale and try again.',
                     ]);
                 }
 
@@ -163,9 +181,9 @@ class PosController extends Controller
             $now = now();
 
             $order = Order::create([
-                'order_number' => 'pending-'.Str::ulid(),
+                'order_number' => 'pending-' . Str::ulid(),
                 'customer_id' => $customer?->id,
-                'cashier_id' => Auth::id(),
+                'cashier_id' => $cashierId,
                 'status' => 'completed',
                 'subtotal' => $subtotal,
                 'discount_percent' => $discountPercent,
@@ -175,7 +193,7 @@ class PosController extends Controller
                 'total' => $total,
                 'place_at' => $now,
             ]);
-            $orderNumber = 'INV-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT);
+            $orderNumber = 'INV-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT);
             $order->update(['order_number' => $orderNumber]);
 
             $receiptLines = [];
@@ -202,14 +220,14 @@ class PosController extends Controller
 
                 StockMovement::create([
                     'product_id' => $product->id,
-                    'user_id' => Auth::id(),
+                    'user_id' => $cashierId,
                     'purchase_order_id' => null,
                     'order_item_id' => $orderItem->id,
                     'type' => 'sale',
                     'quantity' => -$quantity,
                     'balance' => $balance,
                     'reference' => $order->id,
-                    'note' => 'Point of sale '.$orderNumber,
+                    'note' => 'Point of sale ' . $orderNumber,
                 ]);
 
                 $receiptLines[] = [
@@ -227,7 +245,7 @@ class PosController extends Controller
                 'payment_method_id' => $paymentMethod->id,
                 'amount' => $total,
                 'refunded_amount' => 0,
-                'reference' => 'PAY-'.$order->id,
+                'reference' => 'PAY-' . $order->id,
                 'status' => 'paid',
                 'paid_at' => $now,
             ]);

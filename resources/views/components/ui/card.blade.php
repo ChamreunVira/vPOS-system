@@ -2,10 +2,10 @@
 
 @php $hasHeader = $title || isset($actions); @endphp
 
-<section {{ $attributes->class('rounded-xl border border-line bg-surface') }}>
+<section {{ $attributes->class('min-w-0 rounded-xl border border-line bg-surface') }}>
     @if ($hasHeader)
         <header class="flex items-start justify-between gap-4 px-5 pt-5">
-            <div class="min-w-0">
+            <div class="min-w-0 break-words">
                 <h2 class="text-base font-semibold text-neutral-950">{{ __($title) }}</h2>
                 @if ($description)<p class="mt-0.5 text-sm text-ink-muted">{{ __($description) }}</p>@endif
             </div>

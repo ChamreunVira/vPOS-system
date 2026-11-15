@@ -26,13 +26,13 @@ class ProductController extends Controller
             ->with(['category', 'unit'])
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $query) use ($search): void {
-                    $query->where('name', 'like', '%'.$search.'%')
-                        ->orWhere('sku', 'like', '%'.$search.'%')
-                        ->orWhere('barcode', 'like', '%'.$search.'%');
+                    $query->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('sku', 'like', '%' . $search . '%')
+                        ->orWhere('barcode', 'like', '%' . $search . '%');
                 });
             })
-            ->when(isset($filters['category_id']), fn (Builder $query) => $query->where('category_id', $filters['category_id']))
-            ->when(isset($filters['status']), fn (Builder $query) => $query->where('status', $filters['status']))
+            ->when(isset($filters['category_id']), fn(Builder $query) => $query->where('category_id', $filters['category_id']))
+            ->when(isset($filters['status']), fn(Builder $query) => $query->where('status', $filters['status']))
             ->orderBy('name')
             ->paginate(10)
             ->withQueryString();

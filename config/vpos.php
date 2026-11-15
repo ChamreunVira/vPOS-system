@@ -2,7 +2,7 @@
 
 return [
     'name' => env('VPOS_NAME', 'vPOS'),
-    'store' => env('VPOS_STORE', 'Sala Mini Mart'),
+    'store' => env('VPOS_STORE', 'Srey-Seng Plastic'),
     'register' => 'Register 01',
 
     // Primary currency is USD; KHR is shown as a secondary amount.

@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\OrderItem;
+use App\Models\Product;
+use App\Models\PurchaseOrder;
 use App\Models\StockMovement;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class StockMovementController extends Controller
@@ -12,7 +16,11 @@ class StockMovementController extends Controller
      */
     public function index()
     {
-        //
+        $stockMovements = StockMovement::with(['product', 'user', 'purchaseOrder', 'orderItem'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('inventory.index', compact('stockMovements'));
     }
 
     /**
@@ -28,7 +36,29 @@ class StockMovementController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $data = $$request->validate([
+            'product_id' => ['required', 'integer', 'exists' . Product::class . ',id'],
+            'user_id' => ['required', 'integer', 'exists' . User::class . ',id'],
+            'purchase_order_id' => ['required', 'integer', 'exists' . PurchaseOrder::class . ',id'],
+            'order_item_id' => ['required', 'integer', 'exists' . OrderItem::class . ',id'],
+            'type' => ['required', 'string'],
+            'quantity' => ['required', 'numeric'],
+            'balance' => ['required', 'numeric'],
+            'reference' => ['required', 'numeric'],
+            'note' => ['required', 'string'],
+        ]);
+
+        StockMovement::create([
+            'product_id' => $data['product_id'],
+            'user_id' => $data['user_id'],
+            'purchase_order_id' => $data['purchase_order_id'],
+            'order_item_id' => $data['order_item_id'],
+            'type' => $data['type'],
+            'quantity' => $data['quantity'],
+            'balance' => $data['balance'],
+            'reference' => $data['reference'],
+            'note' => $data['note']
+        ]);
     }
 
     /**

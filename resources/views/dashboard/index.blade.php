@@ -17,15 +17,15 @@
         {{-- Sales chart with range tabs --}}
         <x-ui.card title="Sales" description="Net sales compared with the previous period" class="xl:col-span-2">
             <div x-data="{ range: 'week' }">
-                <div class="mb-4 inline-flex rounded-lg bg-neutral-100 p-1 text-sm">
+                <div class="mb-4 flex w-full rounded-lg bg-neutral-100 p-1 sm:inline-flex sm:w-auto">
                     @foreach (['today' => 'Today', 'week' => 'This week', 'month' => 'This month'] as $key => $label)
-                        <button type="button" @click="range = '{{ $key }}'" :class="range === '{{ $key }}' ? 'bg-white shadow-sm' : 'text-neutral-500'" class="rounded-md px-3 py-1 font-medium">{{ $label }}</button>
+                        <button type="button" @click="range = '{{ $key }}'" :class="range === '{{ $key }}' ? 'bg-white shadow-sm' : 'text-neutral-500'" class="min-w-0 flex-1 rounded-md px-2 py-1.5 text-center text-xs font-medium leading-5 sm:flex-initial sm:whitespace-nowrap sm:px-3 sm:py-1 sm:text-sm">{{ $label }}</button>
                     @endforeach
                 </div>
                 @foreach ($charts as $key => $series)
                     <div x-show="range === '{{ $key }}'" x-cloak><x-ui.bar-chart :data="$series" /></div>
                 @endforeach
-                <div class="mt-4 flex items-center gap-5 text-xs text-ink-muted">
+                <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink-muted">
                     <span class="flex items-center gap-2"><span class="size-2.5 rounded-sm bg-neutral-950"></span> Current</span>
                     <span class="flex items-center gap-2"><span class="size-2.5 rounded-sm bg-neutral-200"></span> Previous</span>
                 </div>
@@ -42,7 +42,7 @@
                             <a href="{{ route('products.show', $product['id']) }}" class="block truncate text-sm font-medium hover:underline">{{ $product['name'] }}</a>
                             <p class="text-xs text-ink-muted">{{ $product['category'] }}</p>
                         </div>
-                        <span class="font-money text-sm">{{ number_format($product['sold']) }}</span>
+                        <span class="font-money shrink-0 whitespace-nowrap text-sm">{{ number_format($product['sold']) }}</span>
                     </li>
                 @endforeach
             </ol>
@@ -52,7 +52,7 @@
     <div class="mt-6 grid gap-6 xl:grid-cols-3">
         <x-ui.card title="Recent transactions" class="xl:col-span-2" :padded="false">
             <x-slot:actions><x-ui.button :href="route('orders.index')" variant="ghost" size="sm">View all</x-ui.button></x-slot:actions>
-            <x-ui.table>
+            <x-ui.table class="[&_table]:min-w-[600px]">
                 <x-slot:head><tr><th>Sale</th><th>Customer</th><th>Payment</th><th>Status</th><th class="text-right">Total</th></tr></x-slot:head>
                 @foreach ($recentOrders as $order)
                     <tr>

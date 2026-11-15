@@ -6,7 +6,7 @@
         <span>{{ __($label) }}</span>
         @if ($icon)<x-ui.icon :name="$icon" class="size-4 text-neutral-400" />@endif
     </div>
-    <p class="mt-2 text-2xl font-semibold tracking-tight text-neutral-950">{{ $slot }}</p>
+    <p class="mt-2 min-w-0 break-words text-xl font-semibold tracking-tight text-neutral-950 sm:text-2xl">{{ $slot }}</p>
     @if (! is_null($delta))
         <p class="mt-1.5 flex items-center gap-1 text-xs text-ink-muted">
             <span class="font-medium text-neutral-900">{{ $delta >= 0 ? '↑' : '↓' }} {{ abs($delta) }}%</span> {{ __('vs. yesterday') }}

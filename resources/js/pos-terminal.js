@@ -12,6 +12,11 @@ export default ({ products, config }) => ({
     barcode: "",
     category: "All",
     notice: "",
+    scannerOpen: false,
+    scannerMessage: "",
+    videoStream: null,
+    detector: null,
+    scanFrame: null,
 
     cart: [],
     heldSales: [],
@@ -49,6 +54,8 @@ export default ({ products, config }) => ({
                         price: product.price,
                         stock: product.stock,
                         emoji: product.emoji,
+                        image: product.image,
+                        allowDecimal: product.allow_decimal,
                     };
                 });
         } catch {
@@ -60,10 +67,14 @@ export default ({ products, config }) => ({
         this.$watch("heldSales", () => this.persistCart());
     },
     persistCart() {
-        localStorage.setItem(
-            this.storageKey,
-            JSON.stringify({ cart: this.cart, heldSales: this.heldSales }),
-        );
+        try {
+            localStorage.setItem(
+                this.storageKey,
+                JSON.stringify({ cart: this.cart, heldSales: this.heldSales }),
+            );
+        } catch {
+            this.flash("This browser could not save the cart for later.");
+        }
     },
 
     // ---------- formatting ----------
@@ -105,26 +116,36 @@ export default ({ products, config }) => ({
 
     // ---------- cart ----------
     addToCart(product) {
-        if (product.stock <= 0) return;
+        const minimumQuantity = product.allow_decimal ? 0.01 : 1;
+        if (product.stock < minimumQuantity) return;
         const line = this.cart.find((item) => item.id === product.id);
         if (line) {
-            if (line.quantity < product.stock) line.quantity++;
+            this.increase(line);
             return;
         }
+        const quantity = Math.min(1, product.stock);
         this.cart.push({
             id: product.id,
             name: product.name,
             emoji: product.emoji,
+            image: product.image,
             price: product.price,
             stock: product.stock,
-            quantity: 1,
+            allowDecimal: product.allow_decimal,
+            quantity,
         });
     },
     increase(line) {
-        if (line.quantity < line.stock) line.quantity++;
+        const step = line.allowDecimal ? 0.1 : 1;
+        line.quantity = Math.min(
+            line.stock,
+            Math.round((line.quantity + step) * 100) / 100,
+        );
     },
     decrease(line) {
-        if (line.quantity > 1) line.quantity--;
+        const step = line.allowDecimal ? 0.1 : 1;
+        const nextQuantity = Math.round((line.quantity - step) * 100) / 100;
+        if (nextQuantity > 0) line.quantity = nextQuantity;
         else this.removeFromCart(line);
     },
     removeFromCart(line) {
@@ -138,14 +159,106 @@ export default ({ products, config }) => ({
     scanBarcode() {
         const code = this.barcode.trim();
         if (!code) return;
+        this.addProductByCode(code);
+        this.barcode = "";
+    },
+    addProductByCode(code) {
         const product = this.products.find(
             (item) =>
                 item.barcode === code ||
                 item.sku.toLowerCase() === code.toLowerCase(),
         );
-        if (product) this.addToCart(product);
-        else this.flash(`No product found for "${code}"`);
-        this.barcode = "";
+        if (product) {
+            const previousQuantity =
+                this.cart.find((line) => line.id === product.id)?.quantity ?? 0;
+            this.addToCart(product);
+            const line = this.cart.find((item) => item.id === product.id);
+            if (line && line.quantity > previousQuantity) {
+                this.flash(`${product.name} added to sale`);
+            } else {
+                this.flash(`${product.name} has no more stock available`);
+            }
+        } else {
+            this.flash(`No product found for "${code}"`);
+        }
+    },
+    async startBarcodeScanner() {
+        this.scannerMessage = "";
+        this.scannerOpen = true;
+
+        if (
+            !window.isSecureContext ||
+            !navigator.mediaDevices?.getUserMedia ||
+            !("BarcodeDetector" in window)
+        ) {
+            this.scannerMessage = "Camera scanning needs a supported browser and a secure HTTPS connection. Use the barcode field instead.";
+            return;
+        }
+
+        try {
+            const supportedFormats = await BarcodeDetector.getSupportedFormats();
+            if (!this.scannerOpen) return;
+            const formats = [
+                "ean_13",
+                "ean_8",
+                "upc_a",
+                "upc_e",
+                "code_128",
+                "code_39",
+            ].filter((format) => supportedFormats.includes(format));
+            if (!formats.length) {
+                throw new Error("No supported barcode formats");
+            }
+
+            this.detector = new BarcodeDetector({ formats });
+            const videoStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: "environment" } },
+                audio: false,
+            });
+            if (!this.scannerOpen) {
+                videoStream.getTracks().forEach((track) => track.stop());
+                return;
+            }
+            this.videoStream = videoStream;
+            this.$refs.barcodeVideo.srcObject = this.videoStream;
+            await this.$refs.barcodeVideo.play();
+            if (!this.scannerOpen) return;
+            this.scanBarcodeFromCamera();
+        } catch {
+            const scannerWasOpen = this.scannerOpen;
+            this.stopBarcodeScanner();
+            if (scannerWasOpen) {
+                this.scannerOpen = true;
+                this.scannerMessage = "Could not open the camera. Check camera permission and use the barcode field if needed.";
+            }
+        }
+    },
+    async scanBarcodeFromCamera() {
+        if (!this.scannerOpen || !this.detector || !this.videoStream) return;
+
+        try {
+            const matches = await this.detector.detect(this.$refs.barcodeVideo);
+            if (matches.length) {
+                this.addProductByCode(matches[0].rawValue.trim());
+                this.stopBarcodeScanner();
+                return;
+            }
+        } catch {
+            this.scannerMessage = "Could not read the barcode. Try again or enter it manually.";
+        }
+
+        this.scanFrame = requestAnimationFrame(() => this.scanBarcodeFromCamera());
+    },
+    stopBarcodeScanner() {
+        this.scannerOpen = false;
+        if (this.scanFrame) cancelAnimationFrame(this.scanFrame);
+        this.scanFrame = null;
+        this.videoStream?.getTracks().forEach((track) => track.stop());
+        this.videoStream = null;
+        this.detector = null;
+    },
+    destroy() {
+        this.stopBarcodeScanner();
     },
     holdSale() {
         if (!this.cart.length) return;
@@ -175,21 +288,26 @@ export default ({ products, config }) => ({
         return this.cart.reduce((sum, line) => sum + line.quantity, 0);
     },
     get subtotal() {
-        return this.cart.reduce(
-            (sum, line) => sum + line.price * line.quantity,
-            0,
-        );
+        return Math.round(
+            this.cart.reduce(
+                (sum, line) =>
+                    sum + Math.round(line.price * line.quantity * 100) / 100,
+                0,
+            ) * 100,
+        ) / 100;
     },
     get discountAmount() {
-        return (this.subtotal * this.discountPercent) / 100;
+        return Math.round(this.subtotal * this.discountPercent) / 100;
     },
     get vatAmount() {
-        return (
-            ((this.subtotal - this.discountAmount) * this.config.vatRate) / 100
-        );
+        return Math.round(
+            ((this.subtotal - this.discountAmount) * this.config.vatRate),
+        ) / 100;
     },
     get total() {
-        return this.subtotal - this.discountAmount + this.vatAmount;
+        return Math.round(
+            (this.subtotal - this.discountAmount + this.vatAmount) * 100,
+        ) / 100;
     },
 
     // ---------- payment ----------

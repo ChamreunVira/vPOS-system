@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Kantumruy+Pro:wght@400;500;600&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="h-full overflow-hidden">
+<body class="h-dvh overflow-hidden">
     {{-- Full-screen checkout shell: no sidebar, so the cashier always sees products and cart. --}}
     {{ $slot }}
 </body>

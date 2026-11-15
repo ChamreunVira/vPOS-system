@@ -19,6 +19,24 @@ return new class extends Migration
             $table->enum('status', SoftDeleteStatus::all())->default(SoftDeleteStatus::Active->value);
             $table->timestamps();
         });
+
+        $productForeignKeys = Schema::getForeignKeys('products');
+        $hasCategoryForeignKey = collect($productForeignKeys)->contains(
+            fn (array $foreignKey): bool => $foreignKey['columns'] === ['category_id'] && $foreignKey['foreign_table'] === 'categories',
+        );
+        $hasUnitForeignKey = collect($productForeignKeys)->contains(
+            fn (array $foreignKey): bool => $foreignKey['columns'] === ['unit_id'] && $foreignKey['foreign_table'] === 'units',
+        );
+
+        Schema::table('products', function (Blueprint $table) use ($hasCategoryForeignKey, $hasUnitForeignKey): void {
+            if (! $hasCategoryForeignKey) {
+                $table->foreign('category_id')->references('id')->on('categories')->cascadeOnDelete();
+            }
+
+            if (! $hasUnitForeignKey) {
+                $table->foreign('unit_id')->references('id')->on('units')->cascadeOnDelete();
+            }
+        });
     }
 
     /**
@@ -26,6 +44,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('products', function (Blueprint $table): void {
+            $table->dropForeign(['category_id']);
+            $table->dropForeign(['unit_id']);
+        });
+
         Schema::dropIfExists('categories');
     }
 };

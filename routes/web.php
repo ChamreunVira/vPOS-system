@@ -35,6 +35,7 @@ Route::prefix('admin')->group(function () {
     Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('units', UnitController::class)->only(['index', 'store', 'update']);
 
+    // Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::post('inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
 
@@ -58,4 +59,4 @@ Route::prefix('admin')->group(function () {
     Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
 })->middleware(['auth', 'verified']);
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

@@ -5,7 +5,6 @@
              config: {
                  vatRate: {{ config('vpos.vat_rate') }},
                  exchangeRate: {{ config('vpos.exchange_rate') }},
-                 nextInvoice: {{ $nextInvoice }},
                  customers: @js($customers),
                  checkoutUrl: '{{ route('pos.checkout') }}',
              },
@@ -14,11 +13,11 @@
 
         {{-- ============ Left: catalogue ============ --}}
         <section class="flex min-h-0 flex-1 flex-col">
-            <header class="flex flex-wrap items-center gap-3 border-b border-line bg-white px-4 py-3">
+            <header class="flex flex-wrap items-center gap-2 border-b border-line bg-white px-3 py-2 sm:gap-3 sm:px-4 sm:py-3">
                 <x-ui.button :href="route('dashboard')" variant="ghost" size="sm" icon="arrow-left">{{ __('Dashboard') }}</x-ui.button>
-                <div class="leading-tight">
-                    <p class="text-sm font-semibold">{{ config('vpos.store') }}</p>
-                    <p class="text-xs text-ink-muted">{{ config('vpos.register') }} · Sreymao Lim</p>
+                <div class="min-w-0 leading-tight">
+                    <p class="truncate text-sm font-semibold">{{ config('vpos.store') }}</p>
+                    <p class="truncate text-xs text-ink-muted">{{ config('vpos.register') }} · Sreymao Lim</p>
                 </div>
                 <div class="relative ml-auto w-full sm:w-72">
                     <x-ui.icon name="search" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
@@ -28,6 +27,7 @@
                     <x-ui.icon name="scan" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
                     <input x-ref="barcode" x-model="barcode" type="text" inputmode="numeric" autofocus placeholder="{{ __('Scan barcode (F2)') }}" class="font-money h-10 w-full rounded-lg border border-neutral-300 pl-9 pr-3 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900">
                 </form>
+                <x-ui.button type="button" variant="secondary" icon="scan" @click="startBarcodeScanner()">Use camera</x-ui.button>
                 <x-layout.language-switcher />
             </header>
 
@@ -43,9 +43,12 @@
                 <p x-show="notice" x-cloak x-text="notice" class="mb-3 rounded-lg bg-neutral-950 px-4 py-2 text-sm text-white"></p>
                 <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
                     <template x-for="product in filteredProducts" :key="product.id">
-                        <button type="button" @click="addToCart(product)" :disabled="product.stock <= 0"
+                        <button type="button" @click="addToCart(product)" :disabled="product.stock < (product.allow_decimal ? 0.01 : 1)"
                                 class="flex flex-col rounded-xl border border-line bg-white p-3 text-left transition hover:border-neutral-950 disabled:opacity-50 disabled:hover:border-line">
-                            <span class="flex aspect-[4/3] items-center justify-center rounded-lg bg-neutral-100 text-5xl" x-text="product.emoji" aria-hidden="true"></span>
+                            <span class="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-neutral-100 text-5xl">
+                                <img x-show="product.image" :src="product.image" :alt="product.name" class="size-full object-cover" x-cloak>
+                                <span x-show="!product.image" x-text="product.emoji" aria-hidden="true"></span>
+                            </span>
                             <span class="mt-3 line-clamp-2 min-h-10 text-sm font-medium" x-text="product.name"></span>
                             <span class="mt-2 flex items-center justify-between">
                                 <span class="font-money text-sm font-semibold" x-text="usd(product.price)"></span>
@@ -61,7 +64,7 @@
         </section>
 
         {{-- ============ Right: cart ============ --}}
-        <aside class="flex max-h-[55vh] min-h-0 w-full flex-col border-t border-line bg-white lg:max-h-none lg:w-[400px] lg:border-l lg:border-t-0">
+        <aside class="flex max-h-[55dvh] min-h-0 w-full flex-col border-t border-line bg-white lg:max-h-none lg:w-[400px] lg:border-l lg:border-t-0">
             <div class="flex items-center justify-between border-b border-line px-5 py-4">
                 <h2 class="text-base font-semibold">Current sale <span class="ml-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium" x-text="itemCount + ' items'"></span></h2>
                 <div class="flex gap-1">
@@ -79,19 +82,25 @@
 
             <ul class="min-h-0 flex-1 divide-y divide-neutral-100 overflow-y-auto px-5">
                 <template x-for="line in cart" :key="line.id">
-                    <li class="flex items-center gap-3 py-3">
-                        <span class="flex size-11 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-2xl" x-text="line.emoji" aria-hidden="true"></span>
+                    <li class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 py-3 sm:flex sm:gap-3">
+                        <span class="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-neutral-100 text-2xl">
+                            <img x-show="line.image" :src="line.image" :alt="line.name" class="size-full object-cover" x-cloak>
+                            <span x-show="!line.image" x-text="line.emoji" aria-hidden="true"></span>
+                        </span>
                         <div class="min-w-0 flex-1">
                             <p class="truncate text-sm font-medium" x-text="line.name"></p>
                             <p class="font-money text-xs text-ink-muted" x-text="usd(line.price) + ' each'"></p>
                         </div>
-                        <div class="flex items-center rounded-lg border border-neutral-300">
+                        <div class="col-start-2 row-start-2 flex w-fit items-center rounded-lg border border-neutral-300 sm:row-auto">
                             <button type="button" @click="decrease(line)" class="p-1.5 hover:bg-neutral-100" aria-label="Decrease quantity"><x-ui.icon name="minus" /></button>
-                            <span class="font-money w-7 text-center text-sm" x-text="line.quantity"></span>
-                            <button type="button" @click="increase(line)" class="p-1.5 hover:bg-neutral-100" aria-label="Increase quantity"><x-ui.icon name="plus" /></button>
+                            <input x-show="line.allowDecimal" type="number" min="0.01" step="0.01" :max="line.stock" x-model.number="line.quantity"
+                                   @change="line.quantity = Number.isFinite(Number($event.target.value)) ? Math.max(0.01, Math.min(line.stock, Math.round(Number($event.target.value) * 100) / 100)) : 0.01"
+                                   class="font-money w-14 border-0 bg-transparent p-0 text-center text-sm focus:ring-0" :aria-label="'Quantity for ' + line.name">
+                            <span x-show="!line.allowDecimal" class="font-money w-7 text-center text-sm" x-text="line.quantity"></span>
+                            <button type="button" @click="increase(line)" :disabled="line.quantity >= line.stock" class="p-1.5 hover:bg-neutral-100 disabled:opacity-40" aria-label="Increase quantity"><x-ui.icon name="plus" /></button>
                         </div>
-                        <span class="font-money w-16 text-right text-sm font-medium" x-text="usd(line.price * line.quantity)"></span>
-                        <button type="button" @click="removeFromCart(line)" class="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-950" aria-label="Remove item"><x-ui.icon name="x" /></button>
+                        <span class="font-money col-start-3 row-start-2 w-16 whitespace-nowrap text-right text-sm font-medium sm:row-auto" x-text="usd(line.price * line.quantity)"></span>
+                        <button type="button" @click="removeFromCart(line)" class="col-start-3 row-start-1 justify-self-end rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-950 sm:row-auto" aria-label="Remove item"><x-ui.icon name="x" /></button>
                     </li>
                 </template>
                 <li x-show="! cart.length" x-cloak><x-ui.empty-state icon="cart" title="Cart is empty" description="Tap a product or scan a barcode to start the sale." /></li>
@@ -125,6 +134,26 @@
             </div>
         </aside>
 
+        {{-- ============ Camera barcode scanner ============ --}}
+        <div x-show="scannerOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="barcode-scanner-title" @keydown.escape.window="stopBarcodeScanner()">
+            <button type="button" class="absolute inset-0 bg-neutral-950/50" aria-label="Close camera scanner" @click="stopBarcodeScanner()"></button>
+            <div class="relative w-full max-w-lg rounded-xl bg-white p-5 shadow-xl">
+                <header class="mb-4 flex items-start justify-between gap-4">
+                    <div>
+                        <h2 id="barcode-scanner-title" class="font-semibold">Scan product barcode</h2>
+                        <p class="mt-1 text-sm text-ink-muted">Center the barcode in the camera view. The product will be added to this sale.</p>
+                    </div>
+                    <button type="button" @click="stopBarcodeScanner()" class="rounded-lg p-1 hover:bg-neutral-100" aria-label="Close"><x-ui.icon name="x" class="size-5" /></button>
+                </header>
+                <video x-ref="barcodeVideo" x-show="videoStream" class="max-h-[60vh] w-full rounded-lg bg-neutral-950 object-cover" playsinline muted></video>
+                <p x-show="!videoStream && !scannerMessage" class="rounded-lg bg-neutral-100 px-4 py-8 text-center text-sm text-ink-muted">Opening camera…</p>
+                <p x-show="scannerMessage" x-cloak role="status" x-text="scannerMessage" class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900"></p>
+                <div class="mt-4 flex justify-end">
+                    <x-ui.button type="button" variant="secondary" @click="stopBarcodeScanner()">Close scanner</x-ui.button>
+                </div>
+            </div>
+        </div>
+
         {{-- ============ Payment modal ============ --}}
         <div x-show="paymentOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="paymentOpen = false">
             <div class="absolute inset-0 bg-neutral-950/40" @click="paymentOpen = false"></div>
@@ -135,6 +164,7 @@
                 </header>
                 <div class="grid gap-6 p-6 md:grid-cols-5">
                     <div class="space-y-4 md:col-span-3">
+                        <p x-show="checkoutError" x-cloak role="alert" x-text="checkoutError" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800"></p>
                         <div class="grid grid-cols-3 gap-2">
                             @foreach (['cash' => ['Cash', 'banknote'], 'khqr' => ['KHQR', 'qr-code'], 'card' => ['Card', 'credit-card']] as $key => [$label, $icon])
                                 <button type="button" @click="method = '{{ $key }}'"
@@ -162,12 +192,12 @@
                         <div x-show="method === 'khqr'" x-cloak class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-neutral-400 p-8 text-center">
                             <x-ui.icon name="qr-code" class="size-32 text-neutral-950" />
                             <p class="text-sm font-medium">Ask the customer to scan with any Bakong banking app.</p>
-                            <p class="text-xs text-ink-muted">Replace this block with the KHQR image generated by your backend.</p>
+                            <p class="text-xs text-ink-muted">Ask the customer to scan your merchant QR and verify the payment before completing the sale.</p>
                         </div>
 
                         <div x-show="method === 'card'" x-cloak class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-neutral-400 p-8 text-center">
                             <x-ui.icon name="credit-card" class="size-12" />
-                            <p class="text-sm font-medium">Tap, insert or swipe the card on the terminal.</p>
+                            <p class="text-sm font-medium">Process the payment on your terminal, then complete the sale after it is approved.</p>
                         </div>
                     </div>
 
@@ -183,7 +213,7 @@
                             <p class="font-money text-sm text-ink-muted" x-text="khr(change)"></p>
                             <p class="mt-2 text-xs text-ink-muted" x-show="receivedAmount > 0 && receivedAmount < total" x-cloak>Customer still owes <span x-text="usd(total - receivedAmount)"></span>.</p>
                         </div>
-                        <x-ui.button size="lg" class="w-full" icon="check" @click="completeSale()" x-bind:disabled="! canComplete">Complete sale</x-ui.button>
+                        <x-ui.button size="lg" class="w-full" icon="check" @click="completeSale()" x-bind:disabled="! canComplete"><span x-text="completing ? 'Saving sale…' : 'Complete sale'"></span></x-ui.button>
                     </div>
                 </div>
             </div>
