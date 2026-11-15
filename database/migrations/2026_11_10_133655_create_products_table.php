@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('category_id');
             $table->foreignId('unit_id');
             $table->string('name');
-            $table->string('sku');
+            $table->string('sku')->nullable()->unique();
             $table->string('barcode')->nullable();
             $table->decimal('cost');
             $table->decimal('price');

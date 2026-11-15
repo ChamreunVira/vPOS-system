@@ -15,19 +15,47 @@
 
     <div class="mt-6 grid gap-6 xl:grid-cols-3">
         {{-- Sales chart with range tabs --}}
-        <x-ui.card title="Sales" description="Net sales compared with the previous period" class="xl:col-span-2">
+        <x-ui.card :padded="false" class="xl:col-span-2">
             <div x-data="{ range: 'week' }">
-                <div class="mb-4 flex w-full rounded-lg bg-neutral-100 p-1 sm:inline-flex sm:w-auto">
-                    @foreach (['today' => 'Today', 'week' => 'This week', 'month' => 'This month'] as $key => $label)
-                        <button type="button" @click="range = '{{ $key }}'" :class="range === '{{ $key }}' ? 'bg-white shadow-sm font-semibold' : 'text-neutral-500'" class="min-w-0 flex-1 rounded-md px-2 py-1.5 text-center text-xs font-medium leading-5 sm:flex-initial sm:whitespace-nowrap sm:px-3 sm:py-1 sm:text-sm">{{ $label }}</button>
+                {{-- Card header with inline tab switcher --}}
+                <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                    <div>
+                        <p class="text-sm font-semibold text-neutral-900">Sales</p>
+                        <p class="text-xs text-neutral-500">Net sales vs. the previous period</p>
+                    </div>
+                    <div class="flex rounded-lg border border-neutral-200 bg-neutral-50 p-0.5">
+                        @foreach (['today' => 'Today', 'week' => 'Week', 'month' => 'Month'] as $key => $label)
+                            <button
+                                type="button"
+                                @click="range = '{{ $key }}'"
+                                :class="range === '{{ $key }}'
+                                    ? 'bg-white shadow-sm text-neutral-900 font-semibold'
+                                    : 'text-neutral-500 hover:text-neutral-700'"
+                                class="rounded-md px-3 py-1 text-xs font-medium transition-all"
+                            >{{ $label }}</button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Chart panels --}}
+                <div class="px-2 pb-4">
+                    @foreach ($charts as $key => $series)
+                        <div x-show="range === '{{ $key }}'" x-cloak>
+                            <x-ui.area-chart :data="$series" height="h-64" />
+                        </div>
                     @endforeach
                 </div>
-                @foreach ($charts as $key => $series)
-                    <div x-show="range === '{{ $key }}'" x-cloak><x-ui.bar-chart :data="$series" /></div>
-                @endforeach
-                <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink-muted">
-                    <span class="flex items-center gap-2"><span class="size-2.5 rounded-sm bg-neutral-950"></span> Current</span>
-                    <span class="flex items-center gap-2"><span class="size-2.5 rounded-sm bg-neutral-200"></span> Previous</span>
+
+                {{-- Legend --}}
+                <div class="flex items-center gap-5 border-t border-neutral-100 px-5 py-3">
+                    <span class="flex items-center gap-2 text-xs text-neutral-500">
+                        <span class="inline-block h-0.5 w-5 rounded-full bg-neutral-900"></span>
+                        Current period
+                    </span>
+                    <span class="flex items-center gap-2 text-xs text-neutral-500">
+                        <span class="inline-block h-0.5 w-5 rounded-full bg-neutral-300"></span>
+                        Previous period
+                    </span>
                 </div>
             </div>
         </x-ui.card>

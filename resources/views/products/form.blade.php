@@ -67,7 +67,6 @@
                 <x-ui.card title="Product details">
                     <div class="grid gap-4 sm:grid-cols-2">
                         <x-form.input class="sm:col-span-2" label="Product name" name="name" placeholder="e.g. Angkor Beer 330ml Can" :value="$product?->name" required />
-                        <x-form.input label="SKU" name="sku" placeholder="BEV-001" :value="$product?->sku" required />
                         <div class="space-y-2">
                             <div class="flex items-end gap-2">
                                 <x-form.input class="min-w-0 flex-1" label="Barcode" name="barcode" placeholder="Scan or type the barcode" x-model="barcode" @keydown.enter.prevent :value="$product?->barcode" />

@@ -3,7 +3,7 @@
 {{-- One place that decides how every status looks. Add new statuses to the map. --}}
 @php
     $variant = match ($status) {
-        'low_stock', 'out_of_stock', 'stock_out' => 'solid',
+        'low_stock', 'out_of_stock', 'stock_out' => 'warning',
         'pending', 'unpaid', 'inactive', 'cancelled' => 'outline',
         'refunded', 'partially_refunded', 'return' => 'dashed',
         default => 'soft',

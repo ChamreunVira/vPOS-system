@@ -26,13 +26,13 @@ class ProductController extends Controller
             ->with(['category', 'unit'])
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $query) use ($search): void {
-                    $query->where('name', 'like', '%'.$search.'%')
-                        ->orWhere('sku', 'like', '%'.$search.'%')
-                        ->orWhere('barcode', 'like', '%'.$search.'%');
+                    $query->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('sku', 'like', '%' . $search . '%')
+                        ->orWhere('barcode', 'like', '%' . $search . '%');
                 });
             })
-            ->when(isset($filters['category_id']), fn (Builder $query) => $query->where('category_id', $filters['category_id']))
-            ->when(isset($filters['status']), fn (Builder $query) => $query->where('status', $filters['status']))
+            ->when(isset($filters['category_id']), fn(Builder $query) => $query->where('category_id', $filters['category_id']))
+            ->when(isset($filters['status']), fn(Builder $query) => $query->where('status', $filters['status']))
             ->orderBy('name')
             ->paginate(10)
             ->withQueryString();
@@ -61,7 +61,11 @@ class ProductController extends Controller
 
         $data['status'] = $request->boolean('status') ? 'active' : 'inactive';
 
-        Product::create($data);
+        $product = Product::create($data);
+
+        $product->update([
+            'sku' => 'PRD-' . str_pad($product->id, 6, '0', STR_PAD_LEFT),
+        ]);
 
         return redirect()->route('products.index')->with('success', 'Product created.');
     }
@@ -148,7 +152,7 @@ class ProductController extends Controller
     }
 
     /**
-     * @return array{category_id: int, unit_id: int, name: string, sku: string, barcode: ?string, cost: numeric-string, price: numeric-string, stock: numeric-string, min_stock: numeric-string, image: mixed, status: string}
+     * @return array{category_id: int, unit_id: int, name: string, barcode: ?string, cost: numeric-string, price: numeric-string, stock: numeric-string, min_stock: numeric-string, image: mixed, status: string}
      */
     private function validatedData(Request $request): array
     {
@@ -156,7 +160,6 @@ class ProductController extends Controller
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'unit_id' => ['required', 'integer', 'exists:units,id'],
             'name' => ['required', 'string', 'max:255'],
-            'sku' => ['required', 'string', 'max:255'],
             'barcode' => ['nullable', 'string', 'max:255'],
             'cost' => ['required', 'numeric', 'min:0'],
             'price' => ['required', 'numeric', 'min:0'],

@@ -6,6 +6,7 @@
         'solid' => 'bg-emerald-950 text-white',
         'outline' => 'border border-emerald-400 text-emerald-700',
         'dashed' => 'border border-dashed border-neutral-500 text-neutral-700',
+        'warning' => 'border border-amber-400 bg-amber-100 text-amber-700',
         default => 'bg-emerald-100 text-emerald-800',
     },
 ]) }}>{{ $slot }}</span>
