@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Product;
 use Illuminate\Support\Collection;
 
 /**
@@ -89,7 +90,7 @@ final class MockData
         return self::products()->firstWhere('id', $id) ?? abort(404);
     }
 
-    public static function stockLevel(array $product): string
+    public static function stockLevel(array|Product $product): string
     {
         return match (true) {
             $product['stock'] <= 0 => 'out_of_stock',

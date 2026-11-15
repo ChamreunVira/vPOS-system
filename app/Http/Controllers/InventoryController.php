@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\RespondsWithDemoNotice;
-use App\Support\MockData;
+use App\Models\Product;
+use App\Models\StockMovement;
 use Illuminate\Http\Request;
 
 class InventoryController extends Controller
@@ -12,13 +13,41 @@ class InventoryController extends Controller
 
     public function index()
     {
-        $products = MockData::products();
+        $products = Product::query()
+            ->with(['category', 'unit'])
+            ->latest()
+            ->paginate(15);
+
+        $movements = StockMovement::query()
+            ->with(['product', 'user'])
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn(StockMovement $movement) => [
+                'at' => $movement->created_at,
+                'product' => ['name' => $movement->product?->name ?? 'Unknown product'],
+                'note' => $movement->note,
+                'type' => $movement->type,
+                'reference' => $movement->reference,
+                'user' => $movement->user?->name ?? 'Unknown user',
+                'quantity' => $movement->quantity,
+                'balance' => $movement->balance,
+            ]);
+
+        $lowStockProducts = Product::query()
+            ->with(['category', 'unit'])
+            ->whereColumn('stock', '<=', 'min_stock')
+            ->get();
+
+        $stockValue = Product::query()
+            ->selectRaw('COALESCE(SUM(cost * stock), 0) as total')
+            ->value('total');
 
         return view('inventory.index', [
             'products' => $products,
-            'movements' => MockData::stockMovements(),
-            'lowStockProducts' => MockData::lowStockProducts(),
-            'stockValue' => $products->sum(fn ($p) => $p['cost'] * $p['stock']),
+            'movements' => $movements,
+            'lowStockProducts' => $lowStockProducts,
+            'stockValue' => $stockValue,
         ]);
     }
 
