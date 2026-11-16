@@ -18,10 +18,7 @@ class ExpenseCategoryFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->unique()->randomElement([
-                'Rent', 'Salaries', 'Utilities', 'Supplies', 'Marketing',
-                'Maintenance', 'Transport', 'Insurance', 'Equipment', 'Miscellaneous',
-            ]),
+            'name' => ucfirst($this->faker->unique()->words(2, true)),
             'description' => $this->faker->optional()->sentence(),
             'status' => 'active',
         ];

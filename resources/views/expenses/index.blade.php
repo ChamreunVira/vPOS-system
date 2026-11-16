@@ -21,6 +21,7 @@
         },
     }">
         <x-ui.page-header title="Expenses" subtitle="Rent, bills, wages and everything else the shop pays for.">
+            <x-ui.button :href="route('expense-categories.index')" variant="secondary" icon="tags">Categories</x-ui.button>
             <a href="{{ route('expenses.export') }}" class="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50">
                 <x-ui.icon name="download" class="size-4" /> Export
             </a>

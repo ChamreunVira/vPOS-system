@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\RespondsWithDemoNotice;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Support\MockData;
 use Illuminate\Http\Request;
 
@@ -46,10 +47,14 @@ class CustomerController extends Controller
 
     public function show(string $customer)
     {
-        $customer = MockData::customer((int) $customer);
-        $orders = MockData::orders()->take(4);
+        $customer = Customer::query()
+            ->find((int) $customer)
+            ->with('orders')
+            ->first();
 
-        return view('customers.show', compact('customer', 'orders'));
+        // dd($customer->toArray());
+
+        return view('customers.show', compact('customer'));
     }
 
     public function edit(string $customer)

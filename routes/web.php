@@ -4,6 +4,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\ExpenseCategoryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\LocaleController;
@@ -48,6 +49,7 @@ Route::prefix('admin')->group(function () {
 
     Route::resource('customers', CustomerController::class);
     Route::resource('suppliers', SupplierController::class)->except(['show']);
+    Route::resource('expense-categories', ExpenseCategoryController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('expenses', ExpenseController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::get('expenses/export', [ExpenseController::class, 'export'])->name('expenses.export');
 

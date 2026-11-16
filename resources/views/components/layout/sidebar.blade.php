@@ -18,6 +18,7 @@
         ],
         'Finance' => [
             ['Expenses', 'expenses.index', 'banknote', 'expenses.*'],
+            ['Expense categories', 'expense-categories.index', 'tags', 'expense-categories.*'],
             ['Payments', 'payments.index', 'wallet', 'payments.*'],
             ['Reports', 'reports.index', 'bar-chart', 'reports.*'],
         ],

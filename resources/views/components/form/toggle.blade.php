@@ -13,3 +13,4 @@
         <span class="absolute left-0.5 top-0.5 size-5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
     </span>
 </label>
+    

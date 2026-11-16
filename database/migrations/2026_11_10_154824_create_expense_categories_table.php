@@ -7,25 +7,21 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Create the expense_categories table.
      */
     public function up(): void
     {
+        Schema::dropIfExists('expense_categories');
+
         Schema::create('expense_categories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('expense_category_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('created_by')->constrained('users', 'id')->cascadeOnDelete();
-            $table->foreignId('payment_method_id')->constrained()->cascadeOnDelete();
-            $table->string('decription');
-            $table->decimal('amount');
-            $table->decimal('expense_date');
+            $table->string('name');
+            $table->string('description')->nullable();
+            $table->string('status')->default('active');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('expense_categories');

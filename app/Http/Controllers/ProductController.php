@@ -8,6 +8,7 @@ use App\Models\Unit;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -26,13 +27,13 @@ class ProductController extends Controller
             ->with(['category', 'unit'])
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $query) use ($search): void {
-                    $query->where('name', 'like', '%' . $search . '%')
-                        ->orWhere('sku', 'like', '%' . $search . '%')
-                        ->orWhere('barcode', 'like', '%' . $search . '%');
+                    $query->where('name', 'like', '%'.$search.'%')
+                        ->orWhere('sku', 'like', '%'.$search.'%')
+                        ->orWhere('barcode', 'like', '%'.$search.'%');
                 });
             })
-            ->when(isset($filters['category_id']), fn(Builder $query) => $query->where('category_id', $filters['category_id']))
-            ->when(isset($filters['status']), fn(Builder $query) => $query->where('status', $filters['status']))
+            ->when(isset($filters['category_id']), fn (Builder $query) => $query->where('category_id', $filters['category_id']))
+            ->when(isset($filters['status']), fn (Builder $query) => $query->where('status', $filters['status']))
             ->orderBy('name')
             ->paginate(10)
             ->withQueryString();
@@ -61,11 +62,12 @@ class ProductController extends Controller
 
         $data['status'] = $request->boolean('status') ? 'active' : 'inactive';
 
-        $product = Product::create($data);
+        $product = DB::transaction(function () use ($data): Product {
+            $product = Product::create($data);
+            $product->update(['sku' => 'PRD-'.str_pad($product->id, 6, '0', STR_PAD_LEFT)]);
 
-        $product->update([
-            'sku' => 'PRD-' . str_pad($product->id, 6, '0', STR_PAD_LEFT),
-        ]);
+            return $product;
+        });
 
         return redirect()->route('products.index')->with('success', 'Product created.');
     }

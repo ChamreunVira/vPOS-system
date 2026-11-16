@@ -23,14 +23,34 @@
             </div>
             <x-ui.card title="Purchase history" :padded="false">
                 <x-ui.table>
-                    <x-slot:head><tr><th>Invoice</th><th>Date</th><th>Payment</th><th>Status</th><th class="text-right">Total</th></tr></x-slot:head>
-                    @foreach ($orders as $order)
+                    <x-slot:head>
                         <tr>
-                            <td><a href="{{ route('orders.show', $order['id']) }}" class="font-medium hover:underline">{{ $order['number'] }}</a></td>
-                            <td class="text-neutral-600">{{ $order['placed_at']->format('M j, Y') }}</td>
-                            <td>{{ $order['method'] === 'khqr' ? 'KHQR' : ucfirst($order['method']) }}</td>
-                            <td><x-ui.status :status="$order['status']" /></td>
-                            <td class="text-right"><x-ui.money :amount="$order['total']" /></td>
+                            <th>Invoice</th>
+                            <th>Date</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                            <th class="text-right">Total</th>
+                        </tr>
+                    </x-slot:head>
+                    @foreach ($customer['orders'] as $order)
+                        <tr>
+                            <td>
+                                <a href="{{ route('orders.show', $order['id']) }}" class="font-medium hover:underline">
+                                    {{ $order['number'] }}
+                                </a>
+                            </td>
+                            <td class="text-neutral-600">
+                                {{ $order['placed_at']->format('M j, Y') }}
+                            </td>
+                            <td>
+                                {{ $order['method'] === 'khqr' ? 'KHQR' : ucfirst($order['method']) }}
+                            </td>
+                            <td>
+                                <x-ui.status :status="$order['status']" />
+                            </td>
+                            <td class="text-right">
+                                <x-ui.money :amount="$order['total']" />
+                            </td>
                         </tr>
                     @endforeach
                 </x-ui.table>
