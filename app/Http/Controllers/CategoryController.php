@@ -10,9 +10,10 @@ class CategoryController extends Controller
 {
     use RespondsWithDemoNotice;
 
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::all();
+        $categories = Category::query()
+            ->when();
 
         return view('categories.index', ['categories' => $categories]);
     }

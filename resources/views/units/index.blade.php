@@ -27,7 +27,7 @@
             <x-ui.button icon="plus" @click="create()">Add unit</x-ui.button>
         </x-ui.page-header>
 
-        <div class="mb-6 grid gap-4 sm:grid-cols-3">
+        {{-- <div class="mb-6 grid gap-4 sm:grid-cols-3">
             <x-ui.card>
                 <div class="flex items-center justify-between">
                     <div>
@@ -55,7 +55,7 @@
                     <span class="flex size-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700"><x-ui.icon name="layers" class="size-5" /></span>
                 </div>
             </x-ui.card>
-        </div>
+        </div> --}}
 
         <x-ui.card :padded="false">
             <div class="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:justify-between">

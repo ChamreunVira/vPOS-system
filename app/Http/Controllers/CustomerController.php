@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\RespondsWithDemoNotice;
 use App\Models\Customer;
-use App\Models\Order;
 use App\Support\MockData;
 use Illuminate\Http\Request;
 
@@ -14,9 +13,16 @@ class CustomerController extends Controller
 
     public function index()
     {
-        $customers = Customer::all();
+        $customers = Customer::all()->load('orders');
 
-        return view('customers.index', ['customers' => $customers]);
+        $customers = $customers->map(fn($customer) => [
+            ...$customer->toArray(),
+            'total_spent' => array_sum(array_map(fn($item) => $item['total'], $customer['orders']->toArray())),
+            'orders_count' => count($customer['orders']),
+            'last_visit' => $customer['created_at']->format('M j, Y')
+        ]);
+
+        return view('customers.index', compact('customers'));
     }
 
     public function create()
@@ -47,14 +53,15 @@ class CustomerController extends Controller
 
     public function show(string $customer)
     {
+
         $customer = Customer::query()
             ->find((int) $customer)
-            ->with('orders')
-            ->first();
+            ->load('orders');
 
-        // dd($customer->toArray());
+        $total = array_map(fn($item) => $item['total'], $customer['orders']->toArray());
+        $totalSpent = array_sum($total);
 
-        return view('customers.show', compact('customer'));
+        return view('customers.show', compact('customer', 'totalSpent'));
     }
 
     public function edit(string $customer)

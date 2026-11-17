@@ -10,6 +10,21 @@
         </x-ui.page-header>
 
         <x-ui.card :padded="false">
+
+            <div class="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="relative w-full sm:max-w-sm">
+                    <x-ui.icon name="search" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+                    <input type="search" x-model="query" placeholder="Search units..." aria-label="Search units" class="h-10 w-full rounded-lg border border-neutral-300 bg-white pl-9 pr-3 text-sm placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900">
+                </div>
+                <label class="flex items-center gap-2 text-sm text-neutral-600">
+                    <span>Status</span>
+                    <select x-model="statusFilter" class="h-10 rounded-lg border border-neutral-300 bg-white px-3 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </label>
+            </div>
+
             <x-ui.table>
                 <x-slot:head><tr><th>Name</th><th>Description</th><th class="text-right">Products</th><th>Status</th><th></th></tr></x-slot:head>
                 @foreach ($categories as $category)
