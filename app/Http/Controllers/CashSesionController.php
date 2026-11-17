@@ -28,7 +28,7 @@ class CashSesionController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        //lta 0), pac
     }
 
     /**

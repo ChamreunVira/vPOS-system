@@ -11,19 +11,16 @@
 
         <x-ui.card :padded="false">
 
-            <div class="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div class="relative w-full sm:max-w-sm">
-                    <x-ui.icon name="search" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                    <input type="search" x-model="query" placeholder="Search units..." aria-label="Search units" class="h-10 w-full rounded-lg border border-neutral-300 bg-white pl-9 pr-3 text-sm placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900">
-                </div>
-                <label class="flex items-center gap-2 text-sm text-neutral-600">
-                    <span>Status</span>
-                    <select x-model="statusFilter" class="h-10 rounded-lg border border-neutral-300 bg-white px-3 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900">
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                    </select>
-                </label>
-            </div>
+             <form method="GET" action="{{ route('categories.index') }}" class="flex flex-wrap items-end gap-3 border-b border-line p-4">
+                <input type="hidden" name="tab" value="overview">
+                <x-ui.search type='search' class="min-w-56 flex-1" placeholder="Search by name, description" />
+                {{-- <x-form.select label="Category" name="category_id" class="w-48" placeholder="All categories" :options="$categories" :value="request('category_id')" /> --}}
+                {{-- <x-form.select label="Stock level" name="stock_status" class="w-40" placeholder="All stock levels" :options="['in_stock' => 'In stock', 'low_stock' => 'Low stock', 'out_of_stock' => 'Out of stock']" :value="request('stock_status')" /> --}}
+                <x-ui.button type="submit" variant="secondary">Filter</x-ui.button>
+                @if (request()->hasAny(['q', 'category_id', 'stock_status']))
+                    <x-ui.button :href="route('inventory.index')" variant="ghost">Clear</x-ui.button>
+                @endif
+            </form>
 
             <x-ui.table>
                 <x-slot:head><tr><th>Name</th><th>Description</th><th class="text-right">Products</th><th>Status</th><th></th></tr></x-slot:head>

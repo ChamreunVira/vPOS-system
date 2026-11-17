@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\RespondsWithDemoNotice;
 use App\Models\Category;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -12,8 +13,14 @@ class CategoryController extends Controller
 
     public function index(Request $request)
     {
+        $search = trim($request->input('q', ''));
+
         $categories = Category::query()
-            ->when();
+            ->when(
+                $search !== '',
+                fn(Builder $query) =>
+                $query->where('name', 'like', '%' . $search . '%')
+            )->get();
 
         return view('categories.index', ['categories' => $categories]);
     }
@@ -24,6 +31,7 @@ class CategoryController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'description' => ['required', 'string', 'max:255'],
         ]);
+
 
         Category::create([
             'name' => $data['name'],
@@ -40,6 +48,9 @@ class CategoryController extends Controller
 
     public function destroy(string $category)
     {
-        return $this->demo('Category deleted');
+        $category = Category::find($category);
+        $category->delete();
+
+        return redirect()->route('categories.index')->with(['success', 'Category deleted']);
     }
 }
