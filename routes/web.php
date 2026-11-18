@@ -13,6 +13,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\SettingController;
@@ -49,6 +50,10 @@ Route::prefix('admin')->group(function () {
 
     Route::resource('customers', CustomerController::class);
     Route::resource('suppliers', SupplierController::class)->except(['show']);
+    Route::get('purchases/export', [PurchaseOrderController::class, 'export'])->name('purchases.export');
+    Route::post('purchases/{purchase}/receive', [PurchaseOrderController::class, 'receive'])->name('purchases.receive');
+    Route::post('purchases/{purchase}/cancel', [PurchaseOrderController::class, 'cancel'])->name('purchases.cancel');
+    Route::resource('purchases', PurchaseOrderController::class);
     Route::resource('expense-categories', ExpenseCategoryController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('expenses', ExpenseController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::get('expenses/export', [ExpenseController::class, 'export'])->name('expenses.export');

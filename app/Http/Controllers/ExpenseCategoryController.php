@@ -2,45 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\View\View;
 
 class ExpenseCategoryController extends Controller
 {
-    public function index(Request $request): View
+    public function index(): RedirectResponse
     {
-        $query = ExpenseCategory::query()
-            ->withCount('expenses')
-            ->withSum('expenses', 'amount')
-            ->orderBy('name');
-
-        if ($search = trim((string) $request->input('q'))) {
-            $query->where(function ($q) use ($search): void {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        if ($status = $request->input('status')) {
-            $query->where('status', $status);
-        }
-
-        $categories = $query->paginate(15)->withQueryString();
-
-        $totalCategories = ExpenseCategory::count();
-        $activeCategories = ExpenseCategory::where('status', 'active')->count();
-        $totalSpent = (float) Expense::sum('amount');
-
-        return view('expense-categories.index', [
-            'categories' => $categories,
-            'totalCategories' => $totalCategories,
-            'activeCategories' => $activeCategories,
-            'totalSpent' => $totalSpent,
-        ]);
+        return redirect()->route('expenses.index', ['tab' => 'categories']);
     }
 
     public function store(Request $request): RedirectResponse
@@ -61,7 +32,7 @@ class ExpenseCategoryController extends Controller
             'status' => $status,
         ]);
 
-        return redirect()->route('expense-categories.index')
+        return redirect()->route('expenses.index', ['tab' => 'categories'])
             ->with('success', 'Expense category created successfully.');
     }
 
@@ -83,20 +54,20 @@ class ExpenseCategoryController extends Controller
             'status' => $status,
         ]);
 
-        return redirect()->route('expense-categories.index')
+        return redirect()->route('expenses.index', ['tab' => 'categories'])
             ->with('success', 'Expense category updated successfully.');
     }
 
     public function destroy(ExpenseCategory $expenseCategory): RedirectResponse
     {
         if ($expenseCategory->expenses()->exists()) {
-            return redirect()->route('expense-categories.index')
+            return redirect()->route('expenses.index', ['tab' => 'categories'])
                 ->with('error', 'Cannot delete category because it has recorded expenses. You can deactivate it instead.');
         }
 
         $expenseCategory->delete();
 
-        return redirect()->route('expense-categories.index')
+        return redirect()->route('expenses.index', ['tab' => 'categories'])
             ->with('success', 'Expense category deleted.');
     }
 }

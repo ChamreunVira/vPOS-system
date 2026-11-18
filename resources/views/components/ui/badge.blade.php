@@ -9,4 +9,6 @@
         'warning' => 'border border-amber-400 bg-amber-100 text-amber-700',
         default => 'bg-emerald-100 text-emerald-800',
     },
-]) }}>{{ $slot }}</span>
+]) }}>
+    {{ $slot }}
+</span>

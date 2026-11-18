@@ -56,6 +56,14 @@ class Product extends Model
     }
 
     /**
+     * @return HasMany<PurchaseOrderItem, $this>
+     */
+    public function purchaseOrderItems(): HasMany
+    {
+        return $this->hasMany(PurchaseOrderItem::class);
+    }
+
+    /**
      * Determine the stock status level.
      */
     public function getStockLevelAttribute(): string

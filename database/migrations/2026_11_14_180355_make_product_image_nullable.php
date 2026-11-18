@@ -10,7 +10,7 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
+    {   
         Schema::table('products', function (Blueprint $table): void {
             $table->string('image')->nullable()->change();
         });

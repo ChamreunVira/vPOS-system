@@ -1,4 +1,5 @@
 <x-layouts.app title="Payments">
+    <?php echo $payments ?>
     <x-ui.page-header title="Payments" subtitle="Money in, money out, and what should be in the drawer.">
         <x-ui.button variant="secondary" icon="arrow-up-right" @click="$dispatch('open-modal', 'cash-out')">Cash out</x-ui.button>
         <x-ui.button icon="arrow-down-left" @click="$dispatch('open-modal', 'cash-in')">Cash in</x-ui.button>
@@ -15,9 +16,11 @@
                             <td class="font-money text-neutral-600">{{ $payment['reference'] }}</td>
                             <td class="font-medium">{{ $payment['order'] }}</td>
                             <td>{{ $payment['customer'] }}</td>
-                            <td>{{ $payment['method'] === 'khqr' ? 'KHQR' : ucfirst($payment['method']) }}</td>
-                            <td><x-ui.status :status="$payment['status']" /></td>
-                            <td class="text-right"><x-ui.money :amount="$payment['amount']" /></td>
+                            <td>{{ $payment['payment_method']['name'] === 'khqr' ? 'KHQR' : ucfirst($payment['method']) }}</td>
+                            {{-- <td><x-ui.status :status="$payment['status']" /></td> --}}
+                            <td>{{ $payment['status'] }}</td>
+                            <td>{{ $payment['amount']}}</td>
+                            {{-- <td class="text-right"><x-ui.money :amount="$payment['amount']" /></td> --}}
                         </tr>
                     @endforeach
                 </x-ui.table>
