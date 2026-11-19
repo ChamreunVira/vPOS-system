@@ -24,13 +24,84 @@
         @apply bg-canvas font-sans text-ink antialiased;
     }
     html:lang(km) {
-        --font-sans: "Kantumruy Pro", "Inter", ui-sans-serif, system-ui, sans-serif;
+        --font-sans:
+            "Kantumruy Pro", "Inter", ui-sans-serif, system-ui, sans-serif;
     }
     [x-cloak] {
         display: none !important;
     }
     :focus-visible {
         @apply outline-2 outline-offset-2 outline-neutral-900;
+    }
+
+    /* Calendar container */
+    .flatpickr-calendar {
+        border: 1px solid #e5e5e5;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgb(0 0 0 / 8%);
+        font-family: inherit;
+        padding: 8px;
+    }
+
+    /* Header */
+    .flatpickr-months {
+        padding: 8px 0;
+    }
+
+    .flatpickr-current-month {
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    /* Weekdays */
+    .flatpickr-weekdays {
+        margin-bottom: 6px;
+    }
+
+    span.flatpickr-weekday {
+        color: #737373;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    /* Day cells */
+    .flatpickr-day {
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .flatpickr-day:hover {
+        background: #f5f5f5;
+        border-color: transparent;
+    }
+
+    /* Selected date */
+    .flatpickr-day.selected,
+    .flatpickr-day.selected:hover {
+        background: #171717;
+        border-color: #171717;
+        color: white;
+    }
+
+    /* Today */
+    .flatpickr-day.today {
+        border-color: #d4d4d4;
+    }
+
+    /* Input */
+    .flatpickr-input {
+        width: 100%;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 14px;
+        outline: none;
+    }
+
+    .flatpickr-input:focus {
+        border-color: #a3a3a3;
+        box-shadow: 0 0 0 3px rgb(0 0 0 / 5%);
     }
 }
 

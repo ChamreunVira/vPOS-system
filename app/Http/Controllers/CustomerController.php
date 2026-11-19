@@ -15,11 +15,11 @@ class CustomerController extends Controller
     {
         $customers = Customer::all()->load('orders');
 
-        $customers = $customers->map(fn($customer) => [
+        $customers = $customers->map(fn ($customer) => [
             ...$customer->toArray(),
-            'total_spent' => array_sum(array_map(fn($item) => $item['total'], $customer['orders']->toArray())),
+            'total_spent' => array_sum(array_map(fn ($item) => $item['total'], $customer['orders']->toArray())),
             'orders_count' => count($customer['orders']),
-            'last_visit' => $customer['created_at']->format('M j, Y')
+            'last_visit' => $customer['created_at']->format('M j, Y'),
         ]);
 
         return view('customers.index', compact('customers'));
@@ -58,7 +58,7 @@ class CustomerController extends Controller
             ->find((int) $customer)
             ->load('orders');
 
-        $total = array_map(fn($item) => $item['total'], $customer['orders']->toArray());
+        $total = array_map(fn ($item) => $item['total'], $customer['orders']->toArray());
         $totalSpent = array_sum($total);
 
         return view('customers.show', compact('customer', 'totalSpent'));

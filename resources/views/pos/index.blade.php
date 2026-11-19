@@ -11,10 +11,9 @@
          })"
          @keydown.f2.window.prevent="$refs.barcode.focus()">
 
-        {{-- ============ Left: catalogue ============ --}}
         <section class="flex min-h-0 flex-1 flex-col">
             <header class="flex flex-wrap items-center gap-2 border-b border-line bg-white px-3 py-2 sm:gap-3 sm:px-4 sm:py-3">
-                <x-ui.button :href="route('dashboard')" variant="ghost" size="sm" icon="arrow-left">{{ __('Dashboard') }}</x-ui.button>
+                <x-ui.button :href="route('dashboard')" variant="ghost" size="md" icon="arrow-left"></x-ui.button>
                 <div class="min-w-0 leading-tight">
                     <p class="truncate text-sm font-semibold">{{ config('vpos.store') }}</p>
                     <p class="truncate text-xs text-ink-muted">{{ config('vpos.register') }} · Sreymao Lim</p>

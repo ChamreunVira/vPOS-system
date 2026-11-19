@@ -21,15 +21,18 @@ class ReceivePurchaseOrderAction
      *
      * @throws ValidationException
      */
-    public function execute(PurchaseOrder $purchaseOrder, ?User $user = null): PurchaseOrder
-    {
+    public function execute(
+        PurchaseOrder $purchaseOrder,
+        ?User $user = null,
+        bool $updateProductCost = true,
+    ): PurchaseOrder {
         if (! $purchaseOrder->canReceive()) {
             throw ValidationException::withMessages([
                 'status' => ["Purchase order {$purchaseOrder->purchase_number} cannot be received because its status is {$purchaseOrder->status}."],
             ]);
         }
 
-        return DB::transaction(function () use ($purchaseOrder, $user): PurchaseOrder {
+        return DB::transaction(function () use ($purchaseOrder, $user, $updateProductCost): PurchaseOrder {
             $purchaseOrder->loadMissing(['items.product', 'supplier']);
 
             foreach ($purchaseOrder->items as $item) {
@@ -52,10 +55,12 @@ class ReceivePurchaseOrderAction
                     purchaseOrder: $purchaseOrder,
                 );
 
-                // Update product cost with the latest purchase cost
-                $product->update([
-                    'cost' => $item->unit_cost,
-                ]);
+                // Optionally update product cost with the latest purchase cost
+                if ($updateProductCost) {
+                    $product->update([
+                        'cost' => $item->unit_cost,
+                    ]);
+                }
 
                 $item->update([
                     'received_quantity' => $quantity,

@@ -40,7 +40,7 @@
                     </td>
                     <td class="whitespace-nowrap text-neutral-600">{{ $order->placed_at->format('M j, Y g:i A') }}</td>
                     <td>{{ $order->customer_name }}</td>
-                    <td class="text-neutral-600 text-xs">{{ $order->cashier_name }}</td>
+                    <td class="text-neutral-600 text-xs">{{ $order->cashier->name }}</td>
                     <td>{{ strtoupper($order->payment_method) }}</td>
                     <td><x-ui.status :status="$order->payment_status" /></td>
                     <td><x-ui.status :status="$order->status" /></td>

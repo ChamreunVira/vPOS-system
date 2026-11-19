@@ -20,11 +20,14 @@
             </x-slot:head>
             @forelse ($products as $product)
                 <tr>
-                    <td>
-                        <a href="{{ route('products.show', $product) }}" class="flex items-center gap-3 font-medium hover:underline">
-                            <x-ui.product-thumb :product="$product" size="sm" /> {{ $product->name }}
+                    <td class="flex items-center gap-3">
+                        <a href="{{ route('products.show', $product) }}" class="font-medium hover:underline">
+                            <x-ui.product-thumb :product="$product" size="md" /> 
                         </a>
-                        @if ($product->barcode)<span class="ml-12 text-xs text-ink-muted">Barcode: {{ $product->barcode }}</span>@endif
+                        <div classl="flex flex-col items-start leading-6">
+                            <p>{{ $product->name }}</p>
+                            @if ($product->barcode)<span class="text-xs text-ink-muted">Barcode: {{ $product->barcode }}</span>@endif
+                        </div>
                     </td>
                     <td class="font-money text-neutral-600">{{ $product->sku }}</td>
                     <td>{{ $product->category?->name ?? '—' }}</td>

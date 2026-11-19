@@ -75,9 +75,15 @@ class SupplierController extends Controller
      */
     public function destroy(Supplier $supplier): RedirectResponse
     {
-        $supplier->update(['status' => 'inactive']);
+        if ($supplier->purchaseOrders()->exists()) {
+            $supplier->update(['status' => 'inactive']);
 
-        return to_route('suppliers.index')->with('success', 'Supplier deactivated.');
+            return to_route('suppliers.index')->with('success', 'Supplier deactivated.');
+        }
+
+        $supplier->delete();
+
+        return to_route('suppliers.index')->with('success', 'Supplier deleted.');
     }
 
     /**

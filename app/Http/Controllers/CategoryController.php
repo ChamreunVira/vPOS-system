@@ -18,8 +18,7 @@ class CategoryController extends Controller
         $categories = Category::query()
             ->when(
                 $search !== '',
-                fn(Builder $query) =>
-                $query->where('name', 'like', '%' . $search . '%')
+                fn (Builder $query) => $query->where('name', 'like', '%'.$search.'%')
             )->get();
 
         return view('categories.index', ['categories' => $categories]);
@@ -31,7 +30,6 @@ class CategoryController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'description' => ['required', 'string', 'max:255'],
         ]);
-
 
         Category::create([
             'name' => $data['name'],

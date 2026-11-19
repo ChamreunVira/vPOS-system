@@ -105,6 +105,7 @@ class PurchaseOrderController extends Controller
             'supplier_id' => ['required', 'integer', 'exists:suppliers,id'],
             'ordered_at' => ['nullable', 'date'],
             'status' => ['nullable', 'string', 'in:pending,received'],
+            'update_cost' => ['nullable', 'boolean'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
@@ -112,6 +113,10 @@ class PurchaseOrderController extends Controller
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
             'items.*.unit_id' => ['nullable', 'integer', 'exists:units,id'],
         ]);
+
+        if ($request->has('update_cost')) {
+            $validated['update_cost'] = $request->boolean('update_cost');
+        }
 
         $purchaseOrder = $createPurchaseOrder->execute($validated, $request->user());
 
@@ -229,9 +234,13 @@ class PurchaseOrderController extends Controller
     /**
      * Mark a pending purchase order as received and record stock movements.
      */
-    public function receive(PurchaseOrder $purchase, ReceivePurchaseOrderAction $receivePurchaseOrder): RedirectResponse
-    {
-        $purchaseOrder = $receivePurchaseOrder->execute($purchase, auth()->user());
+    public function receive(
+        Request $request,
+        PurchaseOrder $purchase,
+        ReceivePurchaseOrderAction $receivePurchaseOrder
+    ): RedirectResponse {
+        $updateCost = $request->has('update_cost') ? $request->boolean('update_cost') : true;
+        $purchaseOrder = $receivePurchaseOrder->execute($purchase, auth()->user(), $updateCost);
 
         return redirect()->route('purchases.show', $purchaseOrder)
             ->with('success', "Purchase order {$purchaseOrder->purchase_number} received. Products have been stocked into inventory.");

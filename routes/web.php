@@ -61,6 +61,7 @@ Route::prefix('admin')->group(function () {
     Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::post('payments/cash-movement', [PaymentController::class, 'cashMovement'])->name('payments.cash-movement');
 
+    Route::get('reports/export', [ReportController::class, 'export'])->name('reports.export');
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
 
     Route::post('language', [LocaleController::class, 'update'])->name('locale.update');

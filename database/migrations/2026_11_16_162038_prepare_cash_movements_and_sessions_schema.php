@@ -11,7 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
+        if (Schema::hasTable('cash_sesions') && ! Schema::hasTable('cash_sessions')) {
+            Schema::rename('cash_sesions', 'cash_sessions');
+        }
+
+        Schema::table('cash_movements', function (Blueprint $table): void {
+            $table->foreignId('cash_session_id')->nullable()->change();
+        });
     }
 
     /**
@@ -19,6 +25,16 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        try {
+            Schema::table('cash_movements', function (Blueprint $table): void {
+                $table->foreignId('cash_session_id')->nullable(false)->change();
+            });
+        } catch (Throwable) {
+            // Ignore
+        }
+
+        if (Schema::hasTable('cash_sessions') && ! Schema::hasTable('cash_sesions')) {
+            Schema::rename('cash_sessions', 'cash_sesions');
+        }
     }
 };

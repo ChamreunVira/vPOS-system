@@ -3,9 +3,7 @@
 namespace App\Actions\Purchases;
 
 use App\Enums\PurchaseOrderStatus;
-use App\Models\Product;
 use App\Models\PurchaseOrder;
-use App\Models\PurchaseOrderItem;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +21,7 @@ class CreatePurchaseOrderAction
      *     ordered_at?: string|Carbon|null,
      *     notes?: string|null,
      *     status?: string|null,
+     *     update_cost?: bool,
      *     items: array<int, array{
      *         product_id: int,
      *         quantity: float|int|numeric-string,
@@ -88,7 +87,9 @@ class CreatePurchaseOrderAction
 
             // If immediately received, run receive action
             if ($targetStatus === PurchaseOrderStatus::Received->value) {
-                return $this->receivePurchaseOrder->execute($purchaseOrder, $user);
+                $updateProductCost = (bool) ($data['update_cost'] ?? true);
+
+                return $this->receivePurchaseOrder->execute($purchaseOrder, $user, $updateProductCost);
             }
 
             return $purchaseOrder->fresh(['items.product', 'supplier', 'creator']);

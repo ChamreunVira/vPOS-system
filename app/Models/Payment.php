@@ -36,8 +36,17 @@ class Payment extends Model
         return $this->belongsTo(PaymentMethod::class);
     }
 
-    public function proccessor(): BelongsTo
+    public function getCustomerNameAttribute(): string
     {
-        return $this->belongsTo(User::class, 'processed_by');
+        return $this->order?->customer_name ?? 'Walk-in customer';
+    }
+
+    public function getMethodNameAttribute(): string
+    {
+        if (! $this->paymentMethod) {
+            return 'Cash';
+        }
+
+        return $this->paymentMethod->code === 'khqr' ? 'KHQR' : $this->paymentMethod->name;
     }
 }

@@ -14,6 +14,7 @@
             ['Categories', 'categories.index', 'tags', 'categories.*'],
             ['Units', 'units.index', 'ruler', 'units.*'],
             ['Inventory', 'inventory.index', 'layers', 'inventory.*'],
+            ['Purchases', 'purchases.index', 'file-text', 'purchases.*'],
             ['Suppliers', 'suppliers.index', 'truck', 'suppliers.*'],
         ],
         'Finance' => [
