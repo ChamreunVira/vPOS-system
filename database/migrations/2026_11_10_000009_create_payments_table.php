@@ -15,11 +15,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
             $table->foreignId('payment_method_id')->constrained()->cascadeOnDelete();
-            $table->decimal('amount');
-            $table->decimal('refunded_amount');
+            $table->decimal('amount', 12, 2);
+            $table->decimal('refunded_amount', 12, 2)->default(0);
             $table->string('reference');
             $table->string('status');
-            $table->timestamp('paid_at');
+            $table->timestamp('paid_at')->nullable();
             $table->timestamps();
         });
     }

@@ -11,15 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cash_sesions', function (Blueprint $table) {
+        Schema::create('cash_movements', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('cash_register_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('cash_session_id')->nullable()->constrained('cash_sessions')->nullOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->decimal('opening_float');
-            $table->decimal('closing_amount');
-            $table->decimal('expected_amount');
-            $table->timestamp('opened_at');
-            $table->timestamp('closed_at');
+            $table->string('type');
+            $table->string('reason');
+            $table->decimal('amount', 12, 2);
             $table->timestamps();
         });
     }
@@ -29,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cash_sesions');
+        Schema::dropIfExists('cash_movements');
     }
 };

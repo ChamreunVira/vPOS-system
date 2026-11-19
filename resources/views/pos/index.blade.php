@@ -46,7 +46,7 @@
                                 class="flex flex-col rounded-xl border border-line bg-white p-3 text-left transition hover:border-neutral-950 disabled:opacity-50 disabled:hover:border-line">
                             <span class="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-neutral-100 text-5xl">
                                 <img x-show="product.image" :src="product.image" :alt="product.name" class="size-full object-cover" x-cloak>
-                                <span x-show="!product.image" x-text="product.emoji" aria-hidden="true"></span>
+                                {{-- <span x-show="!product.image" x-text="product.emoji" aria-hidden="true"></span> --}}
                             </span>
                             <span class="mt-3 line-clamp-2 min-h-10 text-sm font-medium" x-text="product.name"></span>
                             <span class="mt-2 flex items-center justify-between">

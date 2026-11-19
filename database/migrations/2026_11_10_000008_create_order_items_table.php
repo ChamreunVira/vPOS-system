@@ -15,12 +15,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->decimal('quantity');
-            $table->foreignId('unit_id')->constrained()->cascadeOnDelete();
-            $table->string('conversion_factor');
-            $table->decimal('unit_price');
-            $table->decimal('unit_cost');
-            $table->decimal('line_total');
+            $table->decimal('quantity', 12, 4);
+            $table->foreignId('unit_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('conversion_factor')->default('1.0000');
+            $table->decimal('unit_price', 12, 2);
+            $table->decimal('unit_cost', 12, 2);
+            $table->decimal('line_total', 12, 2);
             $table->timestamps();
         });
     }

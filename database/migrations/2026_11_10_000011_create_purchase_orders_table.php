@@ -14,11 +14,13 @@ return new class extends Migration
         Schema::create('purchase_orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('supplier_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('created_by')->constrained('users', 'id')->cascadeOnDelete();
-            $table->string('purchase_number');
+            $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
+            $table->string('purchase_number')->unique();
             $table->string('status');
-            $table->decimal('total');
+            $table->decimal('total', 12, 2)->default(0);
+            $table->text('notes')->nullable();
             $table->timestamp('ordered_at');
+            $table->timestamp('received_at')->nullable();
             $table->timestamps();
         });
     }

@@ -11,11 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('purchase_orders', function (Blueprint $table) {
-            $table->text('notes')->nullable()->after('total');
-            $table->timestamp('received_at')->nullable()->after('ordered_at');
-        });
-
         Schema::create('purchase_order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('purchase_order_id')->constrained()->cascadeOnDelete();
@@ -35,9 +30,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('purchase_order_items');
-
-        Schema::table('purchase_orders', function (Blueprint $table) {
-            $table->dropColumn(['notes', 'received_at']);
-        });
     }
 };

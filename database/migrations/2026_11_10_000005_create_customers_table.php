@@ -12,12 +12,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('units', function (Blueprint $table) {
+        Schema::create('customers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('abbreviation');
-            $table->string('type');
-            $table->boolean('allow_decimal');
+            $table->string('phone')->nullable();
+            $table->string('email')->nullable();
+            $table->string('address')->nullable();
+            $table->text('notes')->nullable();
             $table->enum('status', SoftDeleteStatus::all())->default(SoftDeleteStatus::Active->value);
             $table->timestamps();
         });
@@ -28,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('units');
+        Schema::dropIfExists('customers');
     }
 };

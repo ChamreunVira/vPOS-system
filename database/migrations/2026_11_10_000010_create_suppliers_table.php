@@ -15,9 +15,9 @@ return new class extends Migration
         Schema::create('suppliers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('phone');
-            $table->string('email');
-            $table->text('address');
+            $table->string('phone')->nullable();
+            $table->string('email')->nullable();
+            $table->text('address')->nullable();
             $table->enum('status', SoftDeleteStatus::all())->default(SoftDeleteStatus::Active->value);
             $table->timestamps();
         });

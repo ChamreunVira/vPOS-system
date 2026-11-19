@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('inventories', function (Blueprint $table) {
+        Schema::create('role_permissions', function (Blueprint $table) {
             $table->id();
-            // $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            // $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            // $table->foreignId('purchase_order_id')->constrained()->cascadeOnDelete();
-            // $table->string('type');
+            $table->foreignId('role_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('permission_id')->constrained()->cascadeOnDelete();
+            $table->unique(['role_id', 'permission_id']);
             $table->timestamps();
         });
     }
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('inventories');
+        Schema::dropIfExists('role_permissions');
     }
 };

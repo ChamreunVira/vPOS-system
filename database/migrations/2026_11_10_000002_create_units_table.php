@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\SoftDeleteStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -11,13 +12,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cash_movements', function (Blueprint $table) {
+        Schema::create('units', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('cash_session_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('name');
+            $table->string('abbreviation');
             $table->string('type');
-            $table->string('reason');
-            $table->decimal('amount');
+            $table->boolean('allow_decimal')->default(false);
+            $table->enum('status', SoftDeleteStatus::all())->default(SoftDeleteStatus::Active->value);
             $table->timestamps();
         });
     }
@@ -27,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cash_movements');
+        Schema::dropIfExists('units');
     }
 };

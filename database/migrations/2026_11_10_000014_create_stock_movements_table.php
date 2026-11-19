@@ -15,13 +15,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('purchase_order_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('order_item_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('purchase_order_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('order_item_id')->nullable()->constrained()->nullOnDelete();
             $table->string('type');
-            $table->decimal('quantity');
-            $table->decimal('balance');
-            $table->decimal('reference');
-            $table->text('note');
+            $table->decimal('quantity', 12, 4);
+            $table->decimal('balance', 12, 4);
+            $table->string('reference')->nullable();
+            $table->text('note')->nullable();
             $table->timestamps();
         });
     }

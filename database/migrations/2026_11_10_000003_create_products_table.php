@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\SoftDeleteStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,17 +13,17 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('category_id');
-            $table->foreignId('unit_id');
+            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('unit_id')->constrained()->cascadeOnDelete();
             $table->string('name');
-            $table->string('sku')->nullable()->unique();
+            $table->string('sku')->nullable();
             $table->string('barcode')->nullable();
-            $table->decimal('cost');
-            $table->decimal('price');
-            $table->decimal('stock');
-            $table->decimal('min_stock');
-            $table->string('image');
-            $table->enum('status', SoftDeleteStatus::all())->default(SoftDeleteStatus::Active->value);
+            $table->decimal('cost', 12, 2);
+            $table->decimal('price', 12, 2);
+            $table->decimal('stock', 12, 4);
+            $table->decimal('min_stock', 12, 4);
+            $table->string('image')->nullable();
+            $table->string('status')->default('active');
             $table->timestamps();
         });
     }
