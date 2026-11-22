@@ -90,16 +90,16 @@
                     </td>
                     <td class="text-right">
                         <div class="flex items-center justify-end gap-1">
-                            <x-ui.button :href="route('purchases.show', $purchase)" variant="ghost" size="sm" icon="eye" aria-label="View {{ $purchase->purchase_number }}" />
+                            <x-ui.button :href="route('purchases.show', $purchase)" variant="view" size="sm" icon="eye" aria-label="View {{ $purchase->purchase_number }}" />
 
                             @if ($purchase->canEdit())
-                                <x-ui.button :href="route('purchases.edit', $purchase)" variant="ghost" size="sm" icon="pencil" aria-label="Edit {{ $purchase->purchase_number }}" />
+                                <x-ui.button :href="route('purchases.edit', $purchase)" variant="edit" size="sm" icon="pencil" aria-label="Edit {{ $purchase->purchase_number }}" />
                             @endif
 
                             @if ($purchase->canCancel())
                                 <form method="POST" action="{{ route('purchases.cancel', $purchase) }}" onsubmit="return confirm('Are you sure you want to cancel purchase order {{ $purchase->purchase_number }}?')">
                                     @csrf
-                                    <x-ui.button type="submit" variant="ghost" size="sm" icon="x" class="text-red-600 hover:text-red-700 hover:bg-red-50" aria-label="Cancel {{ $purchase->purchase_number }}" />
+                                    <x-ui.button type="submit" variant="warning" size="sm" icon="x" aria-label="Cancel {{ $purchase->purchase_number }}" />
                                 </form>
                             @endif
 
@@ -107,7 +107,7 @@
                                 <form method="POST" action="{{ route('purchases.destroy', $purchase) }}" onsubmit="return confirm('Are you sure you want to delete purchase order {{ $purchase->purchase_number }}?')">
                                     @csrf
                                     @method('DELETE')
-                                    <x-ui.button type="submit" variant="ghost" size="sm" icon="trash" class="text-neutral-500 hover:text-red-600 hover:bg-red-50" aria-label="Delete {{ $purchase->purchase_number }}" />
+                                    <x-ui.button type="submit" variant="delete" size="sm" icon="trash" aria-label="Delete {{ $purchase->purchase_number }}" />
                                 </form>
                             @endif
                         </div>

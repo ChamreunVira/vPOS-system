@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Enums\SoftDeleteStatus;
-use Illuminate\Database\Seeder;
 use App\Models\Unit;
+use Illuminate\Database\Seeder;
 
 class UnitSeeder extends Seeder
 {

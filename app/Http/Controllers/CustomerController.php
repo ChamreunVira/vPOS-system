@@ -2,80 +2,95 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Concerns\RespondsWithDemoNotice;
 use App\Models\Customer;
-use App\Support\MockData;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class CustomerController extends Controller
 {
-    use RespondsWithDemoNotice;
-
-    public function index()
+    public function index(Request $request): View
     {
-        $customers = Customer::all()->load('orders');
+        $search = trim((string) $request->input('q', ''));
 
-        $customers = $customers->map(fn ($customer) => [
-            ...$customer->toArray(),
-            'total_spent' => array_sum(array_map(fn ($item) => $item['total'], $customer['orders']->toArray())),
-            'orders_count' => count($customer['orders']),
-            'last_visit' => $customer['created_at']->format('M j, Y'),
-        ]);
+        $customers = Customer::query()
+            ->withCount('orders')
+            ->withSum('orders as total_spent', 'total')
+            ->when($search !== '', function (Builder $query) use ($search): void {
+                $query->where(function (Builder $query) use ($search): void {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+            })
+            ->latest('id')
+            ->get();
 
         return view('customers.index', compact('customers'));
     }
 
-    public function create()
+    public function create(): View
     {
         return view('customers.form', ['customer' => null]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'lowercase'],
-            'address' => ['required', 'string', 'max:255'],
-            'notes' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'address' => ['nullable', 'string', 'max:500'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'status' => ['nullable'],
         ]);
 
-        Customer::Create([
-            'name' => $data['name'],
-            'phone' => $data['phone'],
-            'email' => $data['email'],
-            'address' => $data['address'],
-            'notes' => $data['notes'],
-        ]);
+        $data['status'] = $request->boolean('status') ? 'active' : 'inactive';
+
+        Customer::create($data);
 
         return redirect()->route('customers.index')->with('success', 'Customer created.');
     }
 
-    public function show(string $customer)
+    public function show(Customer $customer): View
     {
+        $customer->load(['orders' => function ($query): void {
+            $query->with('payments.paymentMethod')->latest('place_at');
+        }]);
 
-        $customer = Customer::query()
-            ->find((int) $customer)
-            ->load('orders');
-
-        $total = array_map(fn ($item) => $item['total'], $customer['orders']->toArray());
-        $totalSpent = array_sum($total);
+        $totalSpent = (float) $customer->orders->sum('total');
 
         return view('customers.show', compact('customer', 'totalSpent'));
     }
 
-    public function edit(string $customer)
+    public function edit(Customer $customer): View
     {
-        return view('customers.form', ['customer' => MockData::customer((int) $customer)]);
+        return view('customers.form', ['customer' => $customer]);
     }
 
-    public function update(Request $request, string $customer)
+    public function update(Request $request, Customer $customer): RedirectResponse
     {
-        return $this->demo('Customer updated');
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'address' => ['nullable', 'string', 'max:500'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'status' => ['nullable'],
+        ]);
+
+        $data['status'] = $request->boolean('status') ? 'active' : 'inactive';
+
+        $customer->update($data);
+
+        return redirect()->route('customers.index')->with('success', 'Customer updated.');
     }
 
-    public function destroy(string $customer)
+    public function destroy(Customer $customer): RedirectResponse
     {
-        return $this->demo('Customer deleted');
+        $customer->delete();
+
+        return redirect()->route('customers.index')->with('success', 'Customer deleted.');
     }
 }

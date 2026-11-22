@@ -25,16 +25,16 @@
                     <td><x-ui.status :status="$supplier->status" /></td>
                     <td class="text-right">
                         <div class="flex justify-end gap-1">
-                            <x-ui.button :href="route('suppliers.edit', $supplier)" variant="ghost" size="sm" icon="pencil" aria-label="Edit {{ $supplier->name }}" />
+                            <x-ui.button :href="route('suppliers.edit', $supplier)" variant="edit" size="sm" icon="pencil" aria-label="Edit {{ $supplier->name }}" />
                             @if ($supplier->purchase_orders_count > 0 && $supplier->status === 'active')
                                 <form method="POST" action="{{ route('suppliers.destroy', $supplier) }}" onsubmit="return confirm('Deactivate this supplier?')">
                                     @csrf @method('DELETE')
-                                    <x-ui.button type="submit" variant="ghost" size="sm" icon="x" aria-label="Deactivate {{ $supplier->name }}" />
+                                    <x-ui.button type="submit" variant="warning" size="sm" icon="x" aria-label="Deactivate {{ $supplier->name }}" />
                                 </form>
                             @elseif ($supplier->purchase_orders_count === 0)
                                 <form method="POST" action="{{ route('suppliers.destroy', $supplier) }}" onsubmit="return confirm('Delete this supplier?')">
                                     @csrf @method('DELETE')
-                                    <x-ui.button type="submit" variant="ghost" size="sm" icon="trash" class="text-neutral-500 hover:text-red-600 hover:bg-red-50" aria-label="Delete {{ $supplier->name }}" />
+                                    <x-ui.button type="submit" variant="delete" size="sm" icon="trash" aria-label="Delete {{ $supplier->name }}" />
                                 </form>
                             @endif
                         </div>

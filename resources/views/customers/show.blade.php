@@ -19,7 +19,7 @@
             <div class="grid gap-4 sm:grid-cols-3">
                 <x-ui.stat-card label="Total spent"><x-ui.money :amount="$totalSpent" /></x-ui.stat-card>
                 <x-ui.stat-card label="Orders">{{ count($customer['orders']) }}</x-ui.stat-card>
-                <x-ui.stat-card label="Last visit"><span class="text-lg">{{ $customer['created_at']->format('l, j F'); }}</span></x-ui.stat-card>
+                <x-ui.stat-card label="Last visit"><span class="text-lg">{{ $customer['created_at']->format('l, j F') }}</span></x-ui.stat-card>
             </div>
             <x-ui.card title="Purchase history" :padded="false">
                 <x-ui.table>

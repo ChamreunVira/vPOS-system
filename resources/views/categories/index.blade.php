@@ -32,10 +32,10 @@
                         <td><x-ui.status :status="$category['status']" /></td>
                         <td class="text-right">
                             <div class="flex justify-end gap-1">
-                                <span class="contents" @click="edit({{ Js::from($category) }})"><x-ui.button variant="ghost" size="sm" icon="pencil" aria-label="Edit" /></span>
+                                <span class="contents" @click="edit({{ Js::from($category) }})"><x-ui.button variant="edit" size="sm" icon="pencil" aria-label="Edit" /></span>
                                 <form method="POST" action="{{ route('categories.destroy', $category['id']) }}" onsubmit="return confirm('Delete this category?')">
                                     @csrf @method('DELETE')
-                                    <x-ui.button type="submit" variant="ghost" size="sm" icon="trash" aria-label="Delete" />
+                                    <x-ui.button type="submit" variant="delete" size="sm" icon="trash" aria-label="Delete" />
                                 </form>
                             </div>
                         </td>
@@ -45,7 +45,7 @@
         </x-ui.card>
 
         <x-ui.modal name="category-form" title="Category" description="Name it the way your staff say it out loud.">
-            <form id="category-form" method="POST" :action="form.id ? '{{ url('categories') }}/' + form.id : '{{ route('categories.store') }}'" class="space-y-4">
+            <form id="category-form" method="POST" :action="form.id ? '{{ url('admin/categories') }}/' + form.id : '{{ route('categories.store') }}'" class="space-y-4">
                 @csrf
                 <template x-if="form.id"><input type="hidden" name="_method" value="PUT"></template>
                 <x-form.input label="Name" name="name" x-model="form.name" required />

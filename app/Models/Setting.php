@@ -18,15 +18,27 @@ class Setting extends Model
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-        $setting = Cache::remember("setting.{$key}", 3600, fn () => static::where('key', $key)->first());
+        $value = Cache::remember("setting.{$key}", 3600, function () use ($key) {
+            return static::where('key', $key)->value('value');
+        });
 
-        if ($setting === null) {
+        // Defensive recovery: if cache returned an incomplete object or an old Eloquent model instance
+        if (is_object($value)) {
+            Cache::forget("setting.{$key}");
+            $value = static::where('key', $key)->value('value');
+        }
+
+        if ($value === null) {
             return $default;
         }
 
-        $decoded = json_decode($setting->value, true);
+        if (! is_string($value)) {
+            return $value;
+        }
 
-        return json_last_error() === JSON_ERROR_NONE ? $decoded : $setting->value;
+        $decoded = json_decode($value, true);
+
+        return json_last_error() === JSON_ERROR_NONE ? $decoded : $value;
     }
 
     /**

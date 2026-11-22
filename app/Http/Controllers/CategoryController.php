@@ -2,53 +2,67 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Concerns\RespondsWithDemoNotice;
 use App\Models\Category;
-use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class CategoryController extends Controller
 {
-    use RespondsWithDemoNotice;
-
-    public function index(Request $request)
+    public function index(Request $request): View
     {
-        $search = trim($request->input('q', ''));
+        $search = trim((string) $request->input('q', ''));
 
         $categories = Category::query()
+            ->withCount('products')
             ->when(
                 $search !== '',
-                fn (Builder $query) => $query->where('name', 'like', '%'.$search.'%')
-            )->get();
+                fn (Builder $query) => $query->where(function (Builder $q) use ($search): void {
+                    $q->where('name', 'like', '%'.$search.'%')
+                        ->orWhere('description', 'like', '%'.$search.'%');
+                })
+            )
+            ->orderBy('name')
+            ->get();
 
         return view('categories.index', ['categories' => $categories]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'description' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable'],
         ]);
 
-        Category::create([
-            'name' => $data['name'],
-            'description' => $data['description'],
+        $data['status'] = $request->boolean('status') ? 'active' : 'inactive';
+
+        Category::create($data);
+
+        return redirect()->route('categories.index')->with('success', 'Category created.');
+    }
+
+    public function update(Request $request, Category $category): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable'],
         ]);
 
-        return redirect()->route('categories.index')->with('status', 'Category created.');
+        $data['status'] = $request->boolean('status') ? 'active' : 'inactive';
+
+        $category->update($data);
+
+        return redirect()->route('categories.index')->with('success', 'Category updated.');
     }
 
-    public function update(Request $request, string $category)
+    public function destroy(Category $category): RedirectResponse
     {
-        return $this->demo('Category updated');
-    }
-
-    public function destroy(string $category)
-    {
-        $category = Category::find($category);
         $category->delete();
 
-        return redirect()->route('categories.index')->with(['success', 'Category deleted']);
+        return redirect()->route('categories.index')->with('success', 'Category deleted.');
     }
 }

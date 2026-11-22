@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Helper\CartCalculator;
+use App\Http\Requests\CheckoutRequest;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -11,11 +13,9 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Models\StockMovement;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -42,7 +42,7 @@ class PosController extends Controller
                 'min_stock' => (float) $product->min_stock,
                 'allow_decimal' => (bool) $product->unit?->allow_decimal,
                 'status' => $product->status,
-                'image' => Storage::disk('public')->url($product->image),
+                'image' => $product->image ? Storage::disk('public')->url($product->image) : null,
             ])
             ->values();
 
@@ -57,7 +57,7 @@ class PosController extends Controller
         ]);
     }
 
-    public function checkout(Request $request): JsonResponse
+    public function checkout(CheckoutRequest $request): JsonResponse
     {
         $cashierId = $request->user()?->getAuthIdentifier();
 
@@ -65,24 +65,7 @@ class PosController extends Controller
             abort(401);
         }
 
-        $paymentMethods = PaymentMethod::where('is_enable', true)->pluck('code')->all();
-
-        if (empty($paymentMethods)) {
-            $paymentMethods = config('vpos.payment_methods', ['cash']);
-        }
-        
-        $discountOptions = config('vpos.discount_options', [0]);
-
-        $data = $request->validate([
-            'items' => ['required', 'array', 'min:1'],
-            'items.*' => ['required', 'array:product_id,quantity'],
-            'items.*.product_id' => ['required', 'integer', 'distinct', 'exists:products,id'],
-            'items.*.quantity' => ['required', 'numeric', 'gt:0', 'max:999999'],
-            'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
-            'discount_percent' => ['required', 'numeric', Rule::in($discountOptions)],
-            'payment_method' => ['required', Rule::in($paymentMethods)],
-            'amount_received' => ['required_if:payment_method,cash', 'nullable', 'numeric', 'min:0'],
-        ]);
+        $data = $request->validated();
 
         $receipt = DB::transaction(function () use ($data, $cashierId): array {
             $productIds = collect($data['items'])
@@ -113,60 +96,23 @@ class PosController extends Controller
                 }
             }
 
-            $lineItems = [];
-            $subtotal = 0.0;
-
-            foreach ($data['items'] as $item) {
-                /** @var Product|null $product */
-                $product = $products->get((int) $item['product_id']);
-                $quantity = (float) $item['quantity'];
-
-                if (! $product || $product->status !== 'active') {
-                    throw ValidationException::withMessages([
-                        'items' => 'A product in this sale is no longer available.',
-                    ]);
-                }
-
-                if (round($quantity, 2) !== $quantity) {
-                    throw ValidationException::withMessages([
-                        'items' => 'Product quantities can have at most two decimal places.',
-                    ]);
-                }
-
-                if (! $product->unit?->allow_decimal && floor($quantity) !== $quantity) {
-                    throw ValidationException::withMessages([
-                        'items' => $product->name.' must be sold in whole units.',
-                    ]);
-                }
-
-                if ($quantity > (float) $product->stock) {
-                    throw ValidationException::withMessages([
-                        'items' => 'There is not enough stock for '.$product->name.'. Refresh the sale and try again.',
-                    ]);
-                }
-
-                $lineTotal = round((float) $product->price * $quantity, 2);
-                $subtotal = round($subtotal + $lineTotal, 2);
-                $lineItems[] = [
-                    'product' => $product,
-                    'quantity' => $quantity,
-                    'price' => (float) $product->price,
-                    'cost' => (float) $product->cost,
-                    'line_total' => $lineTotal,
-                ];
-            }
-
             $discountPercent = (float) $data['discount_percent'];
-            $discountAmount = round($subtotal * $discountPercent / 100, 2);
             $vatEnabled = (bool) Setting::get('currency.vat_enabled', config('vpos.vat_rate', 0) > 0);
             $taxRate = $vatEnabled ? (float) Setting::get('currency.vat_rate', config('vpos.vat_rate', 0)) : 0.0;
-            $taxAmount = round(($subtotal - $discountAmount) * $taxRate / 100, 2);
-            $total = round($subtotal - $discountAmount + $taxAmount, 2);
+
+            $cart = CartCalculator::process($data['items'], $products, $discountPercent, $taxRate);
+
+            $lineItems = $cart['line_items'];
+            $subtotal = $cart['subtotal'];
+            $discountAmount = $cart['discount_amount'];
+            $taxAmount = $cart['tax_amount'];
+            $total = $cart['total'];
+
             $paymentCode = $data['payment_method'];
             $paymentLabels = ['cash' => 'Cash', 'khqr' => 'KHQR', 'card' => 'Card'];
             $paymentMethod = PaymentMethod::query()->firstOrCreate(
                 ['code' => $paymentCode],
-                ['name' => $paymentLabels[$paymentCode], 'is_enable' => true],
+                ['name' => $paymentLabels[$paymentCode] ?? ucfirst($paymentCode), 'is_enable' => true],
             );
 
             if (! $paymentMethod->is_enable) {
@@ -181,7 +127,7 @@ class PosController extends Controller
                     'amount_received' => 'The amount received must cover the total.',
                 ]);
             }
-            $change = round(max($received - $total, 0), 2);
+            $change = CartCalculator::change($received, $total);
             $now = now();
 
             $order = Order::create([

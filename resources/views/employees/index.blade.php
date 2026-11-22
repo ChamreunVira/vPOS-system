@@ -16,10 +16,10 @@
                             <td><x-ui.status :status="$employee->status" /></td>
                             <td class="text-right">
                                 <div class="flex justify-end gap-1">
-                                    <x-ui.button :href="route('employees.edit', $employee->id)" variant="ghost" size="sm" icon="pencil" aria-label="Edit" />
+                                    <x-ui.button :href="route('employees.edit', $employee->id)" variant="edit" size="sm" icon="pencil" aria-label="Edit" />
                                     <form method="POST" action="{{ route('employees.destroy', $employee->id) }}" onsubmit="return confirm('Deactivate this employee? They will no longer be able to sign in.')">
                                         @csrf @method('DELETE')
-                                        <x-ui.button type="submit" variant="ghost" size="sm" icon="pause" aria-label="Deactivate" />
+                                        <x-ui.button type="submit" variant="warning" size="sm" icon="pause" aria-label="Deactivate" />
                                     </form>
                                 </div>
                             </td>

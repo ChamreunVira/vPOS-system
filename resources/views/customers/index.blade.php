@@ -15,7 +15,12 @@
                     <td class="text-right"><x-ui.money :amount="$customer['total_spent']" /></td>
                     <td class="text-neutral-600">{{ $customer['last_visit'] }}</td>
                     <td><x-ui.status :status="$customer['status']" /></td>
-                    <td class="text-right"><x-ui.button :href="route('customers.edit', $customer['id'])" variant="ghost" size="sm" icon="pencil" aria-label="Edit" /></td>
+                    <td class="text-right">
+                        <div class="flex justify-end gap-1">
+                            <x-ui.button :href="route('customers.show', $customer['id'])" variant="view" size="sm" icon="eye" aria-label="View" />
+                            <x-ui.button :href="route('customers.edit', $customer['id'])" variant="edit" size="sm" icon="pencil" aria-label="Edit" />
+                        </div>
+                    </td>
                 </tr>
             @endforeach
         </x-ui.table>

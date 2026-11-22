@@ -91,7 +91,7 @@
                         <td class="text-right">
                             <div class="flex items-center justify-end gap-1">
                                 <x-ui.button
-                                    variant="ghost"
+                                    variant="edit"
                                     size="sm"
                                     icon="pencil"
                                     aria-label="Edit"
@@ -106,7 +106,7 @@
                                 <form method="POST" action="{{ route('expense-categories.destroy', $category) }}" onsubmit="return confirm('Delete this expense category?')">
                                     @csrf
                                     @method('DELETE')
-                                    <x-ui.button type="submit" variant="ghost" size="sm" icon="trash" aria-label="Delete" />
+                                    <x-ui.button type="submit" variant="delete" size="sm" icon="trash" aria-label="Delete" />
                                 </form>
                             </div>
                         </td>

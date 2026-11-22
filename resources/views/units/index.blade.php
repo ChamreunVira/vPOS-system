@@ -95,7 +95,7 @@
                             <template x-if="unit.status !== 'active'"><x-ui.status status="inactive" /></template>
                         </td>
                         <td class="text-right">
-                            <x-ui.button variant="ghost" size="sm" icon="pencil" aria-label="Edit unit" ::aria-label="'Edit ' + unit.name" @click="edit(unit)" />
+                            <x-ui.button variant="edit" size="sm" icon="pencil" aria-label="Edit unit" ::aria-label="'Edit ' + unit.name" @click="edit(unit)" />
                         </td>
                     </tr>
                 </template>

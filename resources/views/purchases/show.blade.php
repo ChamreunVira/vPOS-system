@@ -30,7 +30,7 @@
                 <form method="POST" action="{{ route('purchases.destroy', $purchase) }}" onsubmit="return confirm('Are you sure you want to delete this purchase order?')">
                     @csrf
                     @method('DELETE')
-                    <x-ui.button type="submit" variant="ghost" icon="trash" class="text-neutral-500 hover:text-red-600">
+                    <x-ui.button type="submit" variant="delete" icon="trash">
                         Delete
                     </x-ui.button>
                 </form>

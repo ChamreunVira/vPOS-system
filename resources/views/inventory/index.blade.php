@@ -146,10 +146,10 @@
                                     <td><x-ui.status :status="$product->stock_level" /></td>
                                     <td class="text-right">
                                         <div class="flex justify-end gap-1">
-                                            <x-ui.button variant="secondary" size="sm" icon="arrow-down-left" :data-id="$product->id" @click="open({{ $product->id }}, 'stock_in')">In</x-ui.button>
-                                            <x-ui.button variant="secondary" size="sm" icon="arrow-up-right" :data-id="$product->id" @click="open({{ $product->id }}, 'stock_out')">Out</x-ui.button>
-                                            <x-ui.button variant="ghost" size="sm" :data-id="$product->id" @click="open({{ $product->id }}, 'adjustment')">Adjust</x-ui.button>
-                                            <x-ui.button :href="route('inventory.index', ['tab' => 'movements', 'movement_product_id' => $product->id])" variant="ghost" size="sm" icon="layers" title="Movement history" aria-label="View history" />
+                                            <x-ui.button variant="success" size="sm" icon="arrow-down-left" :data-id="$product->id" @click="open({{ $product->id }}, 'stock_in')">In</x-ui.button>
+                                            <x-ui.button variant="warning" size="sm" icon="arrow-up-right" :data-id="$product->id" @click="open({{ $product->id }}, 'stock_out')">Out</x-ui.button>
+                                            <x-ui.button variant="secondary" size="sm" :data-id="$product->id" @click="open({{ $product->id }}, 'adjustment')">Adjust</x-ui.button>
+                                            <x-ui.button :href="route('inventory.index', ['tab' => 'movements', 'movement_product_id' => $product->id])" variant="view" size="sm" icon="layers" title="Movement history" aria-label="View history" />
                                         </div>
                                     </td>
                                 </tr>
