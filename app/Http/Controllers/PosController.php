@@ -66,9 +66,11 @@ class PosController extends Controller
         }
 
         $paymentMethods = PaymentMethod::where('is_enable', true)->pluck('code')->all();
+
         if (empty($paymentMethods)) {
             $paymentMethods = config('vpos.payment_methods', ['cash']);
         }
+        
         $discountOptions = config('vpos.discount_options', [0]);
 
         $data = $request->validate([
