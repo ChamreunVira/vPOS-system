@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Kantumruy+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>[x-cloak] { display: none !important; }</style>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen lg:flex" x-data="{
@@ -29,7 +30,7 @@
     },
 }" @keydown.escape.window="sidebarOpen = false">
     <x-layout.sidebar />
-    <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false" class="fixed inset-0 z-[35] bg-neutral-950/30 lg:hidden"></div>
+    <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false" class="fixed inset-0 z-[35] bg-neutral-950/30 lg:hidden" style="display: none;"></div>
 
     <div class="min-w-0 flex-1">
         <x-layout.topbar />

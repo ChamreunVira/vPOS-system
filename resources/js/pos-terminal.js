@@ -2,6 +2,8 @@
  * Alpine component that powers the checkout screen.
  * Products are supplied by the server; checkout is persisted by the POS endpoint.
  */
+import { createCameraScanner } from "./barcode-scanner";
+
 export default ({ products, config }) => ({
     products,
     config,
@@ -13,10 +15,24 @@ export default ({ products, config }) => ({
     category: "All",
     notice: "",
     scannerOpen: false,
+    scannerLoading: false,
     scannerMessage: "",
-    videoStream: null,
-    detector: null,
-    scanFrame: null,
+    continuousScan: false,
+    scannedFeedback: "",
+    lastScannedCode: "",
+    lastScannedAt: 0,
+    scannerInstance: null,
+
+    mobileModalOpen: false,
+    pairingTab: "qr",
+    mobileSession: null,
+    isMobileConnected: false,
+    mobileLoading: false,
+    mobileError: "",
+    lastEventId: 0,
+    pollTimer: null,
+    countdownText: "",
+    countdownTimer: null,
 
     cart: [],
     heldSales: [],
@@ -65,6 +81,15 @@ export default ({ products, config }) => ({
 
         this.$watch("cart", () => this.persistCart());
         this.$watch("heldSales", () => this.persistCart());
+
+        this.startScannerPolling();
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                this.stopScannerPolling();
+            } else {
+                this.startScannerPolling();
+            }
+        });
     },
     persistCart() {
         try {
@@ -163,10 +188,12 @@ export default ({ products, config }) => ({
         this.barcode = "";
     },
     addProductByCode(code) {
+        const cleanCode = String(code).trim().toLowerCase();
         const product = this.products.find(
             (item) =>
-                item.barcode === code ||
-                item.sku.toLowerCase() === code.toLowerCase(),
+                String(item.barcode ?? "").trim().toLowerCase() === cleanCode ||
+                String(item.sku ?? "").trim().toLowerCase() === cleanCode ||
+                String(item.id) === cleanCode,
         );
         if (product) {
             const previousQuantity =
@@ -184,81 +211,252 @@ export default ({ products, config }) => ({
     },
     async startBarcodeScanner() {
         this.scannerMessage = "";
+        this.scannerLoading = true;
         this.scannerOpen = true;
 
-        if (
-            !window.isSecureContext ||
-            !navigator.mediaDevices?.getUserMedia ||
-            !("BarcodeDetector" in window)
-        ) {
-            this.scannerMessage = "Camera scanning needs a supported browser and a secure HTTPS connection. Use the barcode field instead.";
-            return;
-        }
-
         try {
-            const supportedFormats = await BarcodeDetector.getSupportedFormats();
-            if (!this.scannerOpen) return;
-            const formats = [
-                "ean_13",
-                "ean_8",
-                "upc_a",
-                "upc_e",
-                "code_128",
-                "code_39",
-            ].filter((format) => supportedFormats.includes(format));
-            if (!formats.length) {
-                throw new Error("No supported barcode formats");
+            await this.$nextTick();
+
+            if (!this.scannerInstance) {
+                this.scannerInstance = createCameraScanner({
+                    elementId: "pos-barcode-reader",
+                    onScan: (code) => {
+                        const now = Date.now();
+                        if (code === this.lastScannedCode && now - this.lastScannedAt < 1500) {
+                            return;
+                        }
+                        this.lastScannedCode = code;
+                        this.lastScannedAt = now;
+
+                        this.scannedFeedback = `Scanned: ${code}`;
+                        setTimeout(() => {
+                            this.scannedFeedback = "";
+                        }, 2500);
+
+                        this.addProductByCode(code);
+
+                        if (!this.continuousScan) {
+                            this.stopBarcodeScanner();
+                        }
+                    },
+                });
             }
 
-            this.detector = new BarcodeDetector({ formats });
-            const videoStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: { ideal: "environment" } },
-                audio: false,
-            });
-            if (!this.scannerOpen) {
-                videoStream.getTracks().forEach((track) => track.stop());
-                return;
-            }
-            this.videoStream = videoStream;
-            this.$refs.barcodeVideo.srcObject = this.videoStream;
-            await this.$refs.barcodeVideo.play();
-            if (!this.scannerOpen) return;
-            this.scanBarcodeFromCamera();
-        } catch {
-            const scannerWasOpen = this.scannerOpen;
-            this.stopBarcodeScanner();
-            if (scannerWasOpen) {
-                this.scannerOpen = true;
-                this.scannerMessage = "Could not open the camera. Check camera permission and use the barcode field if needed.";
+            await this.scannerInstance.start();
+            this.scannerLoading = false;
+        } catch (error) {
+            this.scannerLoading = false;
+            const message = error?.message || String(error);
+            if (message.includes("NotAllowedError") || message.includes("Permission")) {
+                this.scannerMessage = "Camera permission was denied. Please allow camera access in browser settings.";
+            } else if (message.includes("NotFoundError") || message.includes("DevicesNotFoundError")) {
+                this.scannerMessage = "No camera was detected on this device.";
+            } else if (message.includes("NotReadableError")) {
+                this.scannerMessage = "Camera is currently in use by another application.";
+            } else {
+                this.scannerMessage = message || "Could not open camera. Please check permissions.";
             }
         }
     },
-    async scanBarcodeFromCamera() {
-        if (!this.scannerOpen || !this.detector || !this.videoStream) return;
-
+    async scanFromFile(event) {
+        const file = event.target.files?.[0];
+        if (!file || !this.scannerInstance) return;
+        this.scannerMessage = "";
         try {
-            const matches = await this.detector.detect(this.$refs.barcodeVideo);
-            if (matches.length) {
-                this.addProductByCode(matches[0].rawValue.trim());
-                this.stopBarcodeScanner();
-                return;
-            }
+            await this.scannerInstance.scanFile(file);
         } catch {
-            this.scannerMessage = "Could not read the barcode. Try again or enter it manually.";
+            this.scannerMessage = "Could not find a valid barcode in that image. Try a clearer image.";
         }
-
-        this.scanFrame = requestAnimationFrame(() => this.scanBarcodeFromCamera());
+        event.target.value = "";
     },
-    stopBarcodeScanner() {
+    async stopBarcodeScanner() {
         this.scannerOpen = false;
-        if (this.scanFrame) cancelAnimationFrame(this.scanFrame);
-        this.scanFrame = null;
-        this.videoStream?.getTracks().forEach((track) => track.stop());
-        this.videoStream = null;
-        this.detector = null;
+        this.scannerLoading = false;
+        if (this.scannerInstance) {
+            await this.scannerInstance.stop();
+        }
     },
     destroy() {
         this.stopBarcodeScanner();
+        this.stopScannerPolling();
+        if (this.countdownTimer) clearInterval(this.countdownTimer);
+    },
+
+    // ---------- mobile scanner integration ----------
+    startScannerPolling() {
+        if (this.pollTimer || !this.config.scannerEventsUrl) return;
+        this.pollScannerEvents();
+        this.pollTimer = setInterval(() => {
+            if (!document.hidden) {
+                this.pollScannerEvents();
+            }
+        }, 1500);
+    },
+    stopScannerPolling() {
+        if (this.pollTimer) {
+            clearInterval(this.pollTimer);
+            this.pollTimer = null;
+        }
+    },
+    async pollScannerEvents() {
+        if (!this.config.scannerEventsUrl) return;
+        try {
+            const url = `${this.config.scannerEventsUrl}?after_id=${this.lastEventId}`;
+            const response = await fetch(url, {
+                headers: {
+                    Accept: "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector('meta[name="csrf-token"]')
+                            ?.content || "",
+                },
+            });
+            const result = await response.json();
+            if (response.ok && result.success && result.data) {
+                this.isMobileConnected = Boolean(result.data.is_paired);
+                const events = Array.isArray(result.data.events)
+                    ? result.data.events
+                    : [];
+                for (const event of events) {
+                    this.addProductByCode(event.barcode);
+                    this.lastEventId = Math.max(
+                        this.lastEventId,
+                        Number(event.id),
+                    );
+                }
+            }
+        } catch {
+            // ignore transient polling errors
+        }
+    },
+    async openMobileScannerModal() {
+        this.mobileModalOpen = true;
+        await this.fetchMobileSession();
+    },
+    async fetchMobileSession() {
+        if (!this.config.scannerSessionUrl) return;
+        this.mobileLoading = true;
+        this.mobileError = "";
+        try {
+            const response = await fetch(this.config.scannerSessionUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector('meta[name="csrf-token"]')
+                            ?.content || "",
+                },
+            });
+            const result = await response.json();
+            if (response.ok && result.success && result.data) {
+                this.mobileSession = result.data;
+                this.isMobileConnected = Boolean(result.data.is_paired);
+                this.startCountdown(result.data.expires_at);
+                if (result.data.qr_url) {
+                    await this.renderQr(result.data.qr_url);
+                }
+            }
+        } catch {
+            this.mobileError = "Could not create scanner session.";
+        } finally {
+            this.mobileLoading = false;
+        }
+    },
+    async regenerateMobileCode() {
+        if (!this.config.scannerRegenerateUrl) return;
+        this.mobileLoading = true;
+        this.mobileError = "";
+        try {
+            const response = await fetch(this.config.scannerRegenerateUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector('meta[name="csrf-token"]')
+                            ?.content || "",
+                },
+            });
+            const result = await response.json();
+            if (response.ok && result.success && result.data) {
+                this.mobileSession = result.data;
+                this.isMobileConnected = false;
+                this.startCountdown(result.data.expires_at);
+                if (result.data.qr_url) {
+                    await this.renderQr(result.data.qr_url);
+                }
+            }
+        } catch {
+            this.mobileError = "Could not refresh pairing code.";
+        } finally {
+            this.mobileLoading = false;
+        }
+    },
+    async disconnectMobileScanner() {
+        if (!this.config.scannerDisconnectUrl) return;
+        try {
+            await fetch(this.config.scannerDisconnectUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector('meta[name="csrf-token"]')
+                            ?.content || "",
+                },
+            });
+            this.isMobileConnected = false;
+            await this.regenerateMobileCode();
+        } catch {
+            // ignore
+        }
+    },
+    async renderQr(text) {
+        await this.$nextTick();
+        if (!window.QRCode) {
+            await new Promise((resolve) => {
+                const existing = document.querySelector('script[data-qr="qrcode"]');
+                if (existing) {
+                    existing.addEventListener("load", () => resolve());
+                    return;
+                }
+                const s = document.createElement("script");
+                s.src = "/vendor/qrcode/qrcode.min.js";
+                s.dataset.qr = "qrcode";
+                s.async = true;
+                s.onload = () => resolve();
+                document.head.appendChild(s);
+            });
+        }
+        const el = document.getElementById("desktop-pairing-qr");
+        if (el) {
+            el.innerHTML = "";
+            new window.QRCode(el, {
+                text: text,
+                width: 180,
+                height: 180,
+                colorDark: "#0a0a0a",
+                colorLight: "#ffffff",
+                correctLevel: window.QRCode.CorrectLevel.M,
+            });
+        }
+    },
+    startCountdown(expiresAt) {
+        if (this.countdownTimer) clearInterval(this.countdownTimer);
+        const targetTime = new Date(expiresAt).getTime();
+        const update = () => {
+            const diff = Math.max(0, Math.floor((targetTime - Date.now()) / 1000));
+            if (diff <= 0) {
+                this.countdownText = "Expired · Click Refresh";
+                clearInterval(this.countdownTimer);
+            } else {
+                const m = Math.floor(diff / 60);
+                const s = diff % 60;
+                this.countdownText = `Expires in ${m}:${s < 10 ? "0" : ""}${s}`;
+            }
+        };
+        update();
+        this.countdownTimer = setInterval(update, 1000);
     },
     holdSale() {
         if (!this.cart.length) return;
@@ -288,26 +486,33 @@ export default ({ products, config }) => ({
         return this.cart.reduce((sum, line) => sum + line.quantity, 0);
     },
     get subtotal() {
-        return Math.round(
-            this.cart.reduce(
-                (sum, line) =>
-                    sum + Math.round(line.price * line.quantity * 100) / 100,
-                0,
-            ) * 100,
-        ) / 100;
+        return (
+            Math.round(
+                this.cart.reduce(
+                    (sum, line) =>
+                        sum +
+                        Math.round(line.price * line.quantity * 100) / 100,
+                    0,
+                ) * 100,
+            ) / 100
+        );
     },
     get discountAmount() {
         return Math.round(this.subtotal * this.discountPercent) / 100;
     },
     get vatAmount() {
-        return Math.round(
-            ((this.subtotal - this.discountAmount) * this.config.vatRate),
-        ) / 100;
+        return (
+            Math.round(
+                (this.subtotal - this.discountAmount) * this.config.vatRate,
+            ) / 100
+        );
     },
     get total() {
-        return Math.round(
-            (this.subtotal - this.discountAmount + this.vatAmount) * 100,
-        ) / 100;
+        return (
+            Math.round(
+                (this.subtotal - this.discountAmount + this.vatAmount) * 100,
+            ) / 100
+        );
     },
 
     // ---------- payment ----------

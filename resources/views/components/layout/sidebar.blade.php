@@ -29,7 +29,7 @@
     ];
 @endphp
 
-<aside :class="[sidebarOpen ? '' : 'max-lg:-translate-x-full', sidebarCollapsed ? 'lg:w-20' : 'lg:w-64']"
+<aside :class="[sidebarOpen ? 'max-lg:pointer-events-auto' : 'max-lg:-translate-x-full max-lg:pointer-events-none', sidebarCollapsed ? 'lg:w-20' : 'lg:w-64']"
        id="main-sidebar" class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-line bg-neutral-50 transition-[width,transform] duration-200 lg:sticky lg:bottom-auto lg:left-auto lg:top-0 lg:h-screen lg:shrink-0">
     <div :class="sidebarCollapsed ? 'lg:justify-center lg:gap-0 lg:px-3' : ''" class="flex h-16 shrink-0 items-center gap-3 px-5">
         <img src="{{ asset('images/v.png') }}" alt="v-logo" class="w-6 h-8 object-cover">

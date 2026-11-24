@@ -7,6 +7,11 @@
                  exchangeRate: {{ config('vpos.exchange_rate') }},
                  customers: @js($customers),
                  checkoutUrl: '{{ route('pos.checkout') }}',
+                 scannerSessionUrl: '{{ route('pos.scanner.session') }}',
+                 scannerStatusUrl: '{{ route('pos.scanner.status') }}',
+                 scannerRegenerateUrl: '{{ route('pos.scanner.regenerate') }}',
+                 scannerDisconnectUrl: '{{ route('pos.scanner.disconnect') }}',
+                 scannerEventsUrl: '{{ route('pos.scanner.events') }}',
              },
          })"
          @keydown.f2.window.prevent="$refs.barcode.focus()">
@@ -27,6 +32,13 @@
                     <input x-ref="barcode" x-model="barcode" type="text" inputmode="numeric" autofocus placeholder="{{ __('Scan barcode (F2)') }}" class="font-money h-10 w-full rounded-lg border border-neutral-300 pl-9 pr-3 text-sm focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900">
                 </form>
                 <x-ui.button type="button" variant="secondary" icon="scan" @click="startBarcodeScanner()">Use camera</x-ui.button>
+                <x-ui.button type="button" variant="secondary" @click="openMobileScannerModal()" class="relative">
+                    <span class="flex items-center gap-1.5">
+                        <x-ui.icon name="smartphone" class="size-4" />
+                        <span>{{ __('Mobile scanner') }}</span>
+                        <span x-show="isMobileConnected" x-cloak class="size-2 rounded-full bg-emerald-500 animate-pulse" title="Mobile connected"></span>
+                    </span>
+                </x-ui.button>
                 <x-layout.language-switcher />
             </header>
 
@@ -139,21 +151,43 @@
             <div class="relative w-full max-w-lg rounded-xl bg-white p-5 shadow-xl">
                 <header class="mb-4 flex items-start justify-between gap-4">
                     <div>
-                        <h2 id="barcode-scanner-title" class="font-semibold">Scan product barcode</h2>
-                        <p class="mt-1 text-sm text-ink-muted">Center the barcode in the camera view. The product will be added to this sale.</p>
+                        <h2 id="barcode-scanner-title" class="font-semibold text-neutral-950">Scan product barcode</h2>
+                        <p class="mt-1 text-sm text-ink-muted">Point camera at the barcode. Items will be added to this sale.</p>
                     </div>
                     <button type="button" @click="stopBarcodeScanner()" class="rounded-lg p-1 hover:bg-neutral-100" aria-label="Close"><x-ui.icon name="x" class="size-5" /></button>
                 </header>
-                <video x-ref="barcodeVideo" x-show="videoStream" class="max-h-[60vh] w-full rounded-lg bg-neutral-950 object-cover" playsinline muted></video>
-                <p x-show="!videoStream && !scannerMessage" class="rounded-lg bg-neutral-100 px-4 py-8 text-center text-sm text-ink-muted">Opening camera…</p>
-                <p x-show="scannerMessage" x-cloak role="status" x-text="scannerMessage" class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900"></p>
-                <div class="mt-4 flex justify-end">
-                    <x-ui.button type="button" variant="secondary" @click="stopBarcodeScanner()">Close scanner</x-ui.button>
+
+                <div class="relative overflow-hidden rounded-xl bg-neutral-950 min-h-[260px] flex items-center justify-center">
+                    <div id="pos-barcode-reader" class="w-full"></div>
+                    <div x-show="scannerLoading" class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-neutral-950/80 text-white">
+                        <x-ui.icon name="scan" class="size-8 animate-pulse text-neutral-300" />
+                        <span class="text-sm font-medium text-neutral-300">Starting camera…</span>
+                    </div>
+                    {{-- Reticle / Aiming Guide with top-to-bottom laser animation --}}
+                    <div x-show="!scannerLoading && !scannerMessage" class="pointer-events-none absolute inset-0 flex items-center justify-center">
+                        <div class="relative h-32 w-64 rounded-xl border-2 border-emerald-400/90 shadow-[0_0_16px_rgba(52,211,153,0.35)] overflow-hidden">
+                            <div class="scanner-laser"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <p x-show="scannedFeedback" x-cloak class="mt-2 rounded-lg bg-emerald-50 px-3 py-1.5 text-center text-xs font-semibold text-emerald-800" x-text="scannedFeedback"></p>
+                <p x-show="scannerMessage" x-cloak role="status" x-text="scannerMessage" class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900"></p>
+
+                <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-2 text-xs font-medium text-neutral-700 cursor-pointer">
+                            <input type="checkbox" x-model="continuousScan" class="rounded border-neutral-300 text-neutral-950 focus:ring-neutral-950">
+                            <span>Keep scanner open for multiple items</span>
+                        </label>
+                        <input type="file" x-ref="barcodeFileInput" accept="image/*" class="hidden" @change="scanFromFile($event)">
+                        <button type="button" class="text-xs text-neutral-500 hover:text-neutral-900 underline" @click="$refs.barcodeFileInput.click()">Upload image</button>
+                    </div>
+                    <x-ui.button type="button" variant="secondary" size="sm" @click="stopBarcodeScanner()">Close scanner</x-ui.button>
                 </div>
             </div>
         </div>
 
-        {{-- ============ Payment modal ============ --}}
         <div x-show="paymentOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="paymentOpen = false">
             <div class="absolute inset-0 bg-neutral-950/40" @click="paymentOpen = false"></div>
             <div class="relative max-h-full w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-xl">
@@ -218,7 +252,6 @@
             </div>
         </div>
 
-        {{-- ============ Receipt modal ============ --}}
         <div x-show="receiptOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div class="absolute inset-0 bg-neutral-950/40"></div>
             <div class="relative flex max-h-full w-full max-w-md flex-col rounded-xl bg-white shadow-xl">
@@ -258,6 +291,99 @@
                     <x-ui.button variant="secondary" icon="printer" @click="window.print()">Print receipt</x-ui.button>
                     <x-ui.button icon="plus" @click="startNewSale()">New sale</x-ui.button>
                 </footer>
+            </div>
+        </div>
+
+        {{-- ============ Mobile scanner pairing modal ============ --}}
+        <div x-show="mobileModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="mobile-scanner-modal-title" @keydown.escape.window="mobileModalOpen = false">
+            <div class="absolute inset-0 bg-neutral-950/50 backdrop-blur-xs" @click="mobileModalOpen = false"></div>
+            <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                <header class="flex items-center justify-between pb-4 border-b border-line">
+                    <div class="flex items-center gap-2.5">
+                        <span class="flex size-9 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900">
+                            <x-ui.icon name="smartphone" class="size-5" />
+                        </span>
+                        <div>
+                            <h2 id="mobile-scanner-modal-title" class="text-base font-semibold text-neutral-950 leading-tight">Mobile Barcode Scanner</h2>
+                            <p class="text-xs text-ink-muted">Scan products with your phone into this POS cart</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="mobileModalOpen = false" class="rounded-lg p-1 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100">
+                        <x-ui.icon name="x" class="size-5" />
+                    </button>
+                </header>
+
+                {{-- Connection Status Banner --}}
+                <div class="my-4 flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-medium"
+                     :class="isMobileConnected ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-neutral-100 text-neutral-700 border border-neutral-200'">
+                    <div class="flex items-center gap-2">
+                        <span class="flex size-2 rounded-full" :class="isMobileConnected ? 'bg-emerald-500 animate-pulse' : 'bg-neutral-400'"></span>
+                        <span x-text="isMobileConnected ? 'Mobile scanner connected & active' : 'No mobile device connected'"></span>
+                    </div>
+                    <button type="button" x-show="isMobileConnected" @click="disconnectMobileScanner()" class="font-semibold text-rose-600 hover:underline">
+                        Disconnect
+                    </button>
+                </div>
+
+                {{-- Tabs: QR Code vs Direct Pairing Code --}}
+                <div class="flex border-b border-line mb-4">
+                    <button type="button"
+                            @click="pairingTab = 'qr'"
+                            :class="pairingTab === 'qr' ? 'border-neutral-950 text-neutral-950 font-semibold' : 'border-transparent text-ink-muted hover:text-neutral-800'"
+                            class="flex-1 py-2 text-center text-xs border-b-2 transition">
+                        Method A: QR Code
+                    </button>
+                    <button type="button"
+                            @click="pairingTab = 'code'"
+                            :class="pairingTab === 'code' ? 'border-neutral-950 text-neutral-950 font-semibold' : 'border-transparent text-ink-muted hover:text-neutral-800'"
+                            class="flex-1 py-2 text-center text-xs border-b-2 transition">
+                        Method B: Direct Code
+                    </button>
+                </div>
+
+                {{-- TAB 1: QR Code Pairing --}}
+                <div x-show="pairingTab === 'qr'" class="flex flex-col items-center text-center space-y-3">
+                    <p class="text-xs text-ink-muted">Scan this QR code with your smartphone camera to connect:</p>
+
+                    <div class="relative flex size-52 items-center justify-center rounded-2xl border-2 border-dashed border-neutral-300 bg-white p-2 shadow-inner">
+                        <div id="desktop-pairing-qr" class="size-full flex items-center justify-center"></div>
+                        <div x-show="mobileLoading" class="absolute inset-0 bg-white/90 flex flex-col items-center justify-center gap-2">
+                            <span class="size-6 rounded-full border-2 border-neutral-900 border-t-transparent animate-spin"></span>
+                            <span class="text-xs text-neutral-600">Generating QR…</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 text-xs text-ink-muted">
+                        <span x-text="countdownText"></span>
+                        <span>·</span>
+                        <button type="button" @click="regenerateMobileCode()" class="inline-flex items-center gap-1 font-semibold text-neutral-900 hover:underline">
+                            <x-ui.icon name="refresh" class="size-3.5" />
+                            <span>Refresh QR</span>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- TAB 2: Direct Pairing Code --}}
+                <div x-show="pairingTab === 'code'" class="flex flex-col items-center text-center space-y-4 py-2">
+                    <p class="text-xs text-ink-muted">On your phone, open <span class="font-mono font-medium text-neutral-900 underline">{{ url('/pos/scanner') }}</span> and enter:</p>
+
+                    <div class="rounded-2xl border border-neutral-200 bg-neutral-50 px-8 py-5">
+                        <p class="font-mono text-3xl font-bold tracking-widest text-neutral-950" x-text="mobileSession?.pairing_code || '------'"></p>
+                    </div>
+
+                    <div class="flex items-center gap-3 text-xs text-ink-muted">
+                        <span x-text="countdownText"></span>
+                        <span>·</span>
+                        <button type="button" @click="regenerateMobileCode()" class="inline-flex items-center gap-1 font-semibold text-neutral-900 hover:underline">
+                            <x-ui.icon name="refresh" class="size-3.5" />
+                            <span>Generate new code</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-line flex justify-end">
+                    <x-ui.button variant="secondary" size="sm" @click="mobileModalOpen = false">Done</x-ui.button>
+                </div>
             </div>
         </div>
     </div>

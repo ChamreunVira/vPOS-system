@@ -28,6 +28,8 @@
             const transfer = new DataTransfer();
             transfer.items.add(file);
             this.$refs.input.files = transfer.files;
+
+            this.$dispatch('image-selected', { file });
         },
 
         handleDrop(event) {

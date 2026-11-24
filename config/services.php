@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'tesseract' => [
+        'path' => env('TESSERACT_PATH', '/usr/bin/tesseract'),
+        'timeout' => (int) env('TESSERACT_TIMEOUT', 15),
+        'language' => env('TESSERACT_LANGUAGE', 'eng'),
+    ],
+
 ];

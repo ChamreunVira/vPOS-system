@@ -10,8 +10,11 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Pos\MobileScannerController;
+use App\Http\Controllers\Pos\ScannerSessionController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductOcrController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\ReportController;
@@ -29,12 +32,18 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::prefix('admin')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('pos', [PosController::class, 'index'])->name('pos.index');
     Route::post('pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
+    Route::post('pos/scanner/session', [ScannerSessionController::class, 'store'])->name('pos.scanner.session');
+    Route::get('pos/scanner/session/status', [ScannerSessionController::class, 'status'])->name('pos.scanner.status');
+    Route::post('pos/scanner/session/regenerate', [ScannerSessionController::class, 'regenerate'])->name('pos.scanner.regenerate');
+    Route::post('pos/scanner/session/disconnect', [ScannerSessionController::class, 'disconnect'])->name('pos.scanner.disconnect');
+    Route::get('pos/scanner/events', [ScannerSessionController::class, 'events'])->name('pos.scanner.events');
 
+    Route::post('products/recognize-image', [ProductOcrController::class, 'recognize'])->name('products.recognize-image');
     Route::resource('products', ProductController::class);
     Route::get('products/{product}/movements', [InventoryController::class, 'productMovements'])->name('products.movements');
     Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
@@ -72,6 +81,18 @@ Route::prefix('admin')->group(function () {
 
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
-})->middleware(['auth', 'verified']);
+});
+
+Route::prefix('pos/scanner')->group(function () {
+    Route::get('/', [MobileScannerController::class, 'index'])->name('pos.scanner.mobile');
+    Route::post('pair/qr', [MobileScannerController::class, 'pairQr'])->name('pos.scanner.pair.qr');
+    Route::post('pair/code', [MobileScannerController::class, 'pairCode'])->middleware('throttle:5,1')->name('pos.scanner.pair.code');
+
+    Route::middleware('scanner.device')->group(function () {
+        Route::get('status', [MobileScannerController::class, 'status'])->name('pos.scanner.device.status');
+        Route::post('scan', [MobileScannerController::class, 'scan'])->middleware('throttle:120,1')->name('pos.scanner.device.scan');
+        Route::post('disconnect', [MobileScannerController::class, 'disconnect'])->name('pos.scanner.device.disconnect');
+    });
+});
 
 require __DIR__.'/auth.php';

@@ -48,6 +48,55 @@
         padding: 8px 0;
     }
 
+    /* Laser Scan Animation for Barcode Viewfinder */
+    @keyframes laser-sweep {
+        0% {
+            top: 4px;
+            opacity: 0.85;
+        }
+        50% {
+            top: calc(100% - 6px);
+            opacity: 1;
+        }
+        100% {
+            top: 4px;
+            opacity: 0.85;
+        }
+    }
+
+    .scanner-laser {
+        position: absolute;
+        left: 2px;
+        right: 2px;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(239, 68, 68, 0) 0%, rgba(239, 68, 68, 1) 15%, rgba(255, 120, 120, 1) 50%, rgba(239, 68, 68, 1) 85%, rgba(239, 68, 68, 0) 100%);
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.9), 0 0 4px rgba(255, 255, 255, 0.95);
+        border-radius: 9999px;
+        animation: laser-sweep 2s ease-in-out infinite;
+        pointer-events: none;
+    }
+
+    /* Barcode Scanner Video Viewport */
+    #pos-barcode-reader,
+    #product-barcode-reader {
+        width: 100% !important;
+        border: none !important;
+    }
+    #pos-barcode-reader video,
+    #product-barcode-reader video {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 52vh !important;
+        object-fit: contain !important;
+        border-radius: 0.75rem !important;
+    }
+    #pos-barcode-reader img,
+    #product-barcode-reader img,
+    #pos-barcode-reader__status_span,
+    #product-barcode-reader__status_span {
+        display: none !important;
+    }
+
     .flatpickr-current-month {
         font-size: 14px;
         font-weight: 600;
