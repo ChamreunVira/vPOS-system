@@ -24,24 +24,24 @@ class PaymentController extends Controller
             ->with(['order.customer', 'paymentMethod'])
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $q) use ($search): void {
-                    $q->where('reference', 'like', '%'.$search.'%')
+                    $q->where('reference', 'like', '%' . $search . '%')
                         ->orWhereHas('order', function (Builder $orderQuery) use ($search): void {
-                            $orderQuery->where('order_number', 'like', '%'.$search.'%')
+                            $orderQuery->where('order_number', 'like', '%' . $search . '%')
                                 ->orWhereHas('customer', function (Builder $customerQuery) use ($search): void {
-                                    $customerQuery->where('name', 'like', '%'.$search.'%')
-                                        ->orWhere('phone', 'like', '%'.$search.'%');
+                                    $customerQuery->where('name', 'like', '%' . $search . '%')
+                                        ->orWhere('phone', 'like', '%' . $search . '%');
                                 });
                         });
                 });
             })
-            ->when($status && $status !== 'all', fn (Builder $query) => $query->where('status', $status))
+            ->when($status && $status !== 'all', fn(Builder $query) => $query->where('status', $status))
             ->when($method && $method !== 'all', function (Builder $query) use ($method): void {
-                $query->whereHas('paymentMethod', fn (Builder $q) => $q->where('code', $method));
+                $query->whereHas('paymentMethod', fn(Builder $q) => $q->where('code', $method));
             })
             ->when($date, function (Builder $query) use ($date): void {
                 $query->where(function (Builder $q) use ($date): void {
                     $q->whereDate('paid_at', $date)
-                        ->orWhere(fn (Builder $sq) => $sq->whereNull('paid_at')->whereDate('created_at', $date));
+                        ->orWhere(fn(Builder $sq) => $sq->whereNull('paid_at')->whereDate('created_at', $date));
                 });
             })
             ->orderByDesc('id');
@@ -60,14 +60,14 @@ class PaymentController extends Controller
             ->with('paymentMethod')
             ->where(function (Builder $q) use ($today): void {
                 $q->whereDate('paid_at', $today)
-                    ->orWhere(fn (Builder $sq) => $sq->whereNull('paid_at')->whereDate('created_at', $today));
+                    ->orWhere(fn(Builder $sq) => $sq->whereNull('paid_at')->whereDate('created_at', $today));
             })
             ->where('status', 'paid')
             ->get();
 
-        $cashSales = (float) $todayPayments->filter(fn (Payment $p) => $p->paymentMethod?->code === 'cash')->sum('amount');
-        $khqrSales = (float) $todayPayments->filter(fn (Payment $p) => $p->paymentMethod?->code === 'khqr')->sum('amount');
-        $cardSales = (float) $todayPayments->filter(fn (Payment $p) => $p->paymentMethod?->code === 'card')->sum('amount');
+        $cashSales = (float) $todayPayments->filter(fn(Payment $p) => $p->paymentMethod?->code === 'cash')->sum('amount');
+        $khqrSales = (float) $todayPayments->filter(fn(Payment $p) => $p->paymentMethod?->code === 'khqr')->sum('amount');
+        $cardSales = (float) $todayPayments->filter(fn(Payment $p) => $p->paymentMethod?->code === 'card')->sum('amount');
 
         $todayMovements = CashMovement::query()
             ->whereDate('created_at', $today)

@@ -14,7 +14,6 @@ use App\Models\Setting;
 use App\Models\StockMovement;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -30,21 +29,21 @@ class PosController extends Controller
             ->with(['category', 'unit'])
             ->where('status', 'active')
             ->orderBy('name')
-            ->get()
-            ->map(fn (Product $product): array => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'sku' => $product->sku ?? '',
-                'barcode' => $product->barcode ?? '',
-                'category' => $product->category?->name ?? 'Uncategorized',
-                'price' => (float) $product->price,
-                'stock' => (float) $product->stock,
-                'min_stock' => (float) $product->min_stock,
-                'allow_decimal' => (bool) $product->unit?->allow_decimal,
-                'status' => $product->status,
-                'image' => $product->image ? Storage::disk('public')->url($product->image) : null,
-            ])
-            ->values();
+            ->get();
+        // ->map(fn (Product $product): array => [
+        //     'id' => $product->id,
+        //     'name' => $product->name,
+        //     'sku' => $product->sku ?? '',
+        //     'barcode' => $product->barcode ?? '',
+        //     'category' => $product->category?->name ?? 'Uncategorized',
+        //     'price' => (float) $product->price,
+        //     'stock' => (float) $product->stock,
+        //     'min_stock' => (float) $product->min_stock,
+        //     'allow_decimal' => (bool) $product->unit?->allow_decimal,
+        //     'status' => $product->status,
+        //     'image' => $product->image ? Storage::disk('public')->url($product->image) : null,
+        // ])
+        // ->values();
 
         $customers = Customer::query()
             ->where('status', 'active')
@@ -70,7 +69,7 @@ class PosController extends Controller
         $receipt = DB::transaction(function () use ($data, $cashierId): array {
             $productIds = collect($data['items'])
                 ->pluck('product_id')
-                ->map(fn ($id): int => (int) $id)
+                ->map(fn($id): int => (int) $id)
                 ->sort()
                 ->values();
 
@@ -131,7 +130,7 @@ class PosController extends Controller
             $now = now();
 
             $order = Order::create([
-                'order_number' => 'pending-'.Str::ulid(),
+                'order_number' => 'pending-' . Str::ulid(),
                 'customer_id' => $customer?->id,
                 'cashier_id' => $cashierId,
                 'status' => 'completed',
@@ -143,7 +142,7 @@ class PosController extends Controller
                 'total' => $total,
                 'place_at' => $now,
             ]);
-            $orderNumber = 'INV-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT);
+            $orderNumber = 'INV-' . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT);
             $order->update(['order_number' => $orderNumber]);
 
             $receiptLines = [];
@@ -177,7 +176,7 @@ class PosController extends Controller
                     'quantity' => -$quantity,
                     'balance' => $balance,
                     'reference' => $order->id,
-                    'note' => 'Point of sale '.$orderNumber,
+                    'note' => 'Point of sale ' . $orderNumber,
                 ]);
 
                 $receiptLines[] = [
@@ -195,7 +194,7 @@ class PosController extends Controller
                 'payment_method_id' => $paymentMethod->id,
                 'amount' => $total,
                 'refunded_amount' => 0,
-                'reference' => 'PAY-'.$order->id,
+                'reference' => 'PAY-' . $order->id,
                 'status' => 'paid',
                 'paid_at' => $now,
             ]);

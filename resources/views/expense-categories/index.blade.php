@@ -18,11 +18,8 @@
             $dispatch('open-modal', 'expense-category-form');
         },
     }">
-        <x-ui.page-header
-            title="Expense categories"
-            subtitle="Organize and classify where your shop spends money."
-            :back="route('expenses.index')"
-        >
+        <x-ui.page-header title="Expense categories" subtitle="Organize and classify where your shop spends money."
+            :back="route('expenses.index')">
             <x-ui.button :href="route('expenses.index')" variant="secondary" icon="banknote">View expenses</x-ui.button>
             <x-ui.button icon="plus" @click="create()">Add category</x-ui.button>
         </x-ui.page-header>
@@ -44,18 +41,16 @@
 
         <x-ui.card :padded="false">
             {{-- Filters --}}
-            <form method="GET" action="{{ route('expense-categories.index') }}" class="flex flex-wrap items-center gap-3 p-4">
-                <x-ui.search class="min-w-56 flex-1" placeholder="Search by name or description" name="q" :value="request('q')" />
-                <x-form.select
-                    name="status"
-                    class="w-40"
-                    placeholder="All status"
-                    :options="['active' => 'Active', 'inactive' => 'Inactive']"
-                    :value="request('status')"
-                />
+            <form method="GET" action="{{ route('expense-categories.index') }}"
+                class="flex flex-wrap items-center gap-3 p-4">
+                <x-ui.search class="min-w-56 flex-1" placeholder="Search by name or description" name="q"
+                    :value="request('q')" />
+                <x-form.select name="status" class="w-40" placeholder="All status" :options="['active' => 'Active', 'inactive' => 'Inactive']"
+                    :value="request('status')" />
                 <x-ui.button type="submit" variant="secondary" size="sm">Filter</x-ui.button>
                 @if (request()->hasAny(['q', 'status']))
-                    <a href="{{ route('expense-categories.index') }}" class="text-sm text-neutral-500 hover:text-neutral-700">Clear</a>
+                    <a href="{{ route('expense-categories.index') }}"
+                        class="text-sm text-neutral-500 hover:text-neutral-700">Clear</a>
                 @endif
             </form>
 
@@ -90,23 +85,20 @@
                         </td>
                         <td class="text-right">
                             <div class="flex items-center justify-end gap-1">
-                                <x-ui.button
-                                    variant="edit"
-                                    size="sm"
-                                    icon="pencil"
-                                    aria-label="Edit"
+                                <x-ui.button variant="edit" size="sm" icon="pencil" aria-label="Edit"
                                     type="button"
                                     @click="edit({
                                         id: {{ $category->id }},
                                         name: @js($category->name),
                                         description: @js($category->description ?? ''),
                                         status: @js($category->status),
-                                    })"
-                                />
-                                <form method="POST" action="{{ route('expense-categories.destroy', $category) }}" onsubmit="return confirm('Delete this expense category?')">
+                                    })" />
+                                <form method="POST" action="{{ route('expense-categories.destroy', $category) }}"
+                                    onsubmit="return confirm('Delete this expense category?')">
                                     @csrf
                                     @method('DELETE')
-                                    <x-ui.button type="submit" variant="delete" size="sm" icon="trash" aria-label="Delete" />
+                                    <x-ui.button type="submit" variant="delete" size="sm" icon="trash"
+                                        aria-label="Delete" />
                                 </form>
                             </div>
                         </td>
@@ -114,11 +106,8 @@
                 @empty
                     <tr>
                         <td colspan="6" class="px-5 py-12 text-center">
-                            <x-ui.empty-state
-                                icon="tags"
-                                title="No expense categories found"
-                                description="Create categories like Utilities, Rent, or Inventory to categorize expenses."
-                            />
+                            <x-ui.empty-state icon="tags" title="No expense categories found"
+                                description="Create categories like Utilities, Rent, or Inventory to categorize expenses." />
                         </td>
                     </tr>
                 @endforelse
@@ -130,7 +119,8 @@
         </x-ui.card>
 
         {{-- Add / Edit Modal --}}
-        <x-ui.modal name="expense-category-form" title="Expense category" description="Classify your expenses into clear buckets.">
+        <x-ui.modal name="expense-category-form" title="Expense category"
+            description="Classify your expenses into clear buckets.">
             <form id="expense-category-form" method="POST" class="space-y-4"
                 :action="editMode ? `{{ url('expense-categories') }}/${form.id}` : '{{ route('expense-categories.store') }}'">
                 @csrf
@@ -138,33 +128,22 @@
                     <input type="hidden" name="_method" value="PUT">
                 </template>
 
-                <x-form.input
-                    label="Category name"
-                    name="name"
-                    placeholder="e.g. Rent, Utilities, Packaging"
-                    x-model="form.name"
-                    required
-                />
+                <x-form.input label="Category name" name="name" placeholder="e.g. Rent, Utilities, Packaging"
+                    x-model="form.name" required />
 
-                <x-form.textarea
-                    label="Description"
-                    name="description"
-                    placeholder="Optional notes about what goes into this category"
-                    rows="3"
-                    x-model="form.description"
-                />
+                <x-form.textarea label="Description" name="description"
+                    placeholder="Optional notes about what goes into this category" rows="3"
+                    x-model="form.description" />
 
-                <x-form.toggle
-                    name="status"
-                    label="Active"
-                    hint="Inactive categories will not appear when recording new expenses."
-                    x-model="form.status"
-                />
+                <x-form.toggle name="status" label="Active"
+                    hint="Inactive categories will not appear when recording new expenses." x-model="form.status" />
             </form>
 
             <x-slot:footer>
-                <x-ui.button variant="secondary" @click="$dispatch('close-modal', 'expense-category-form')">Cancel</x-ui.button>
-                <x-ui.button type="submit" form="expense-category-form" x-text="editMode ? 'Update category' : 'Save category'"></x-ui.button>
+                <x-ui.button variant="secondary"
+                    @click="$dispatch('close-modal', 'expense-category-form')">Cancel</x-ui.button>
+                <x-ui.button type="submit" form="expense-category-form"
+                    x-text="editMode ? 'Update category' : 'Save category'"></x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
     </div>

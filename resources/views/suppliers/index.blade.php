@@ -14,7 +14,17 @@
         </form>
 
         <x-ui.table>
-            <x-slot:head><tr><th>Supplier</th><th>Phone</th><th>Email</th><th>Address</th><th class="text-right">Purchase orders</th><th>Status</th><th></th></tr></x-slot:head>
+            <x-slot:head>
+                <tr>
+                    <th>Supplier</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Address</th>
+                    <th class="text-right">Purchase orders</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </x-slot:head>
             @forelse ($suppliers as $supplier)
                 <tr>
                     <td class="font-medium">{{ $supplier->name }}</td>
@@ -25,23 +35,31 @@
                     <td><x-ui.status :status="$supplier->status" /></td>
                     <td class="text-right">
                         <div class="flex justify-end gap-1">
-                            <x-ui.button :href="route('suppliers.edit', $supplier)" variant="edit" size="sm" icon="pencil" aria-label="Edit {{ $supplier->name }}" />
+                            <x-ui.button :href="route('suppliers.edit', $supplier)" variant="edit" size="sm" icon="pencil"
+                                aria-label="Edit {{ $supplier->name }}" />
                             @if ($supplier->purchase_orders_count > 0 && $supplier->status === 'active')
-                                <form method="POST" action="{{ route('suppliers.destroy', $supplier) }}" onsubmit="return confirm('Deactivate this supplier?')">
+                                <form method="POST" action="{{ route('suppliers.destroy', $supplier) }}"
+                                    onsubmit="return confirm('Deactivate this supplier?')">
                                     @csrf @method('DELETE')
-                                    <x-ui.button type="submit" variant="warning" size="sm" icon="x" aria-label="Deactivate {{ $supplier->name }}" />
+                                    <x-ui.button type="submit" variant="warning" size="sm" icon="x"
+                                        aria-label="Deactivate {{ $supplier->name }}" />
                                 </form>
                             @elseif ($supplier->purchase_orders_count === 0)
-                                <form method="POST" action="{{ route('suppliers.destroy', $supplier) }}" onsubmit="return confirm('Delete this supplier?')">
+                                <form method="POST" action="{{ route('suppliers.destroy', $supplier) }}"
+                                    onsubmit="return confirm('Delete this supplier?')">
                                     @csrf @method('DELETE')
-                                    <x-ui.button type="submit" variant="delete" size="sm" icon="trash" aria-label="Delete {{ $supplier->name }}" />
+                                    <x-ui.button type="submit" variant="delete" size="sm" icon="trash"
+                                        aria-label="Delete {{ $supplier->name }}" />
                                 </form>
                             @endif
                         </div>
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="7" class="px-5 py-12 text-center text-sm text-ink-muted">No suppliers found. Add a supplier to start tracking purchases.</td></tr>
+                <tr>
+                    <td colspan="7" class="px-5 py-12 text-center text-sm text-ink-muted">No suppliers found. Add a
+                        supplier to start tracking purchases.</td>
+                </tr>
             @endforelse
         </x-ui.table>
         <div class="border-t border-line px-5 py-3">{{ $suppliers->links() }}</div>
