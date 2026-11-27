@@ -92,13 +92,13 @@
                                         name: @js($category->name),
                                         description: @js($category->description ?? ''),
                                         status: @js($category->status),
-                                    })" />
+                                    })">Edit</x-ui.button>
                                 <form method="POST" action="{{ route('expense-categories.destroy', $category) }}"
                                     onsubmit="return confirm('Delete this expense category?')">
                                     @csrf
                                     @method('DELETE')
                                     <x-ui.button type="submit" variant="delete" size="sm" icon="trash"
-                                        aria-label="Delete" />
+                                        aria-label="Delete">Delete</x-ui.button>
                                 </form>
                             </div>
                         </td>

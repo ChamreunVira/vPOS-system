@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -29,32 +30,16 @@ class CategoryController extends Controller
         return view('categories.index', ['categories' => $categories]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(CategoryRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'description' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable'],
-        ]);
-
-        $data['status'] = $request->boolean('status') ? 'active' : 'inactive';
-
-        Category::create($data);
+        Category::create($request->payload());
 
         return redirect()->route('categories.index')->with('success', 'Category created.');
     }
 
-    public function update(Request $request, Category $category): RedirectResponse
+    public function update(CategoryRequest $request, Category $category): RedirectResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'description' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable'],
-        ]);
-
-        $data['status'] = $request->boolean('status') ? 'active' : 'inactive';
-
-        $category->update($data);
+        $category->update($request->payload());
 
         return redirect()->route('categories.index')->with('success', 'Category updated.');
     }

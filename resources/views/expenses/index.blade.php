@@ -1,7 +1,7 @@
 <x-layouts.app title="Expenses">
     <div x-data="{
         tab: '{{ request('tab', 'expenses') }}',
-
+    
         // Expense Form State
         expenseForm: {
             id: null,
@@ -36,7 +36,7 @@
             };
             $dispatch('open-modal', 'expense-form');
         },
-
+    
         // Category Form State
         categoryForm: {
             id: null,
@@ -68,7 +68,8 @@
     }">
         {{-- Page Header --}}
         <x-ui.page-header title="Expenses" subtitle="Rent, utilities, payroll, and operational spending.">
-            <a href="{{ route('expenses.export') }}" class="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50">
+            <a href="{{ route('expenses.export') }}"
+                class="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50">
                 <x-ui.icon name="download" class="size-4" /> Export CSV
             </a>
             <x-ui.button variant="secondary" icon="tag" @click="createCategory()">New category</x-ui.button>
@@ -98,32 +99,24 @@
 
         {{-- Tab Navigation --}}
         <div class="mb-5 flex gap-1 overflow-x-auto border-b border-line" role="tablist">
-            <button
-                type="button"
-                role="tab"
-                @click="tab = 'expenses'"
+            <button type="button" role="tab" @click="tab = 'expenses'"
                 :class="tab === 'expenses'
-                    ? 'border-neutral-950 text-neutral-950 font-semibold'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-900'"
-                class="-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition"
-            >
+                    ?
+                    'border-neutral-950 text-neutral-950 font-semibold' :
+                    'border-transparent text-neutral-500 hover:text-neutral-900'"
+                class="-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition">
                 {{-- <x-ui.icon name="receipt" class="size-4" /> --}}
-                {{ __('Expenses list') }}
-                <span class="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">{{ $expenses->total() }}</span>
+                {{ __('Expenses') }}
             </button>
 
-            <button
-                type="button"
-                role="tab"
-                @click="tab = 'categories'"
+            <button type="button" role="tab" @click="tab = 'categories'"
                 :class="tab === 'categories'
-                    ? 'border-neutral-950 text-neutral-950 font-semibold'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-900'"
-                class="-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition"
-            >
+                    ?
+                    'border-neutral-950 text-neutral-950 font-semibold' :
+                    'border-transparent text-neutral-500 hover:text-neutral-900'"
+                class="-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition">
                 {{-- <x-ui.icon name="tags" class="size-4" /> --}}
-                {{ __('Expense categories') }}
-                <span class="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">{{ $totalCategories }}</span>
+                {{ __('Categories') }}
             </button>
         </div>
 
@@ -131,37 +124,23 @@
         <div x-show="tab === 'expenses'" x-cloak role="tabpanel">
             <x-ui.card :padded="false">
                 {{-- Filters --}}
-                <form method="GET" action="{{ route('expenses.index') }}" class="flex flex-wrap items-center gap-3 p-4">
+                <form method="GET" action="{{ route('expenses.index') }}"
+                    class="flex flex-wrap items-center gap-3 p-4">
                     <input type="hidden" name="tab" value="expenses">
-                    <x-ui.search class="min-w-56 flex-1" placeholder="Search description..." name="q" :value="request('q')" />
-                    <x-form.select
-                        name="category_id"
-                        class="w-48"
-                        placeholder="All categories"
-                        :options="$categories"
-                        :value="request('category_id')"
-                    />
-                    <x-form.input
-                        type="date"
-                        name="date_from"
-                        label=""
-                        placeholder="From"
-                        class="w-36"
-                        :value="request('date_from')"
-                    />
-                    <x-form.input
-                        type="date"
-                        name="date_to"
-                        label=""
-                        placeholder="To"
-                        class="w-36"
-                        :value="request('date_to')"
-                    />
+                    <x-ui.search class="min-w-56 flex-1" placeholder="Search description..." name="q"
+                        :value="request('q')" />
+                    <x-form.select name="category_id" class="w-48" placeholder="All categories" :options="$categories"
+                        :value="request('category_id')" />
+                    <x-form.input type="date" name="date_from" label="" placeholder="From" class="w-36"
+                        :value="request('date_from')" />
+                    <x-form.input type="date" name="date_to" label="" placeholder="To" class="w-36"
+                        :value="request('date_to')" />
                     <x-ui.button type="submit" variant="secondary" size="sm">
                         <x-ui.icon name="filter" class="size-3.5" /> Filter
                     </x-ui.button>
                     @if (request()->hasAny(['q', 'category_id', 'date_from', 'date_to']))
-                        <a href="{{ route('expenses.index', ['tab' => 'expenses']) }}" class="text-sm text-neutral-500 hover:text-neutral-700">Clear</a>
+                        <a href="{{ route('expenses.index', ['tab' => 'expenses']) }}"
+                            class="text-sm text-neutral-500 hover:text-neutral-700">Clear</a>
                     @endif
                 </form>
 
@@ -197,7 +176,9 @@
                             </td>
                             <td>
                                 @php
-                                    $methodCode = strtolower($expense->paymentMethod->code ?? ($expense->paymentMethod->name ?? 'cash'));
+                                    $methodCode = strtolower(
+                                        $expense->paymentMethod->code ?? ($expense->paymentMethod->name ?? 'cash'),
+                                    );
                                     $methodName = $expense->paymentMethod->name ?? 'Cash';
                                     $methodIcon = match ($methodCode) {
                                         'khqr' => 'qr-code',
@@ -221,11 +202,7 @@
                             </td>
                             <td class="text-right">
                                 <div class="flex items-center justify-end gap-1">
-                                    <x-ui.button
-                                        variant="edit"
-                                        size="sm"
-                                        icon="pencil"
-                                        aria-label="Edit"
+                                    <x-ui.button variant="edit" size="sm" icon="pencil" aria-label="Edit"
                                         type="button"
                                         @click="editExpense({
                                             id: {{ $expense->id }},
@@ -234,12 +211,13 @@
                                             expense_date: '{{ $expense->expense_date->format('Y-m-d') }}',
                                             description: @js($expense->description ?? ''),
                                             payment_method_id: '{{ $expense->payment_method_id ?? '' }}',
-                                        })"
-                                    />
-                                    <form method="POST" action="{{ route('expenses.destroy', $expense) }}" onsubmit="return confirm('Delete this expense?')">
+                                        })">Edit</x-ui.button>
+                                    <form method="POST" action="{{ route('expenses.destroy', $expense) }}"
+                                        onsubmit="return confirm('Delete this expense?')">
                                         @csrf
                                         @method('DELETE')
-                                        <x-ui.button type="submit" variant="delete" size="sm" icon="trash" aria-label="Delete" />
+                                        <x-ui.button type="submit" variant="delete" size="sm" icon="trash"
+                                            aria-label="Delete">Delete</x-ui.button>
                                     </form>
                                 </div>
                             </td>
@@ -247,12 +225,10 @@
                     @empty
                         <tr>
                             <td colspan="7" class="py-12 text-center">
-                                <x-ui.empty-state
-                                    icon="receipt"
-                                    title="No expenses found"
-                                    description="No expenses recorded yet, or no items match your search criteria."
-                                >
-                                    <x-ui.button icon="plus" size="sm" @click="createExpense()">Record first expense</x-ui.button>
+                                <x-ui.empty-state icon="receipt" title="No expenses found"
+                                    description="No expenses recorded yet, or no items match your search criteria.">
+                                    <x-ui.button icon="plus" size="sm" @click="createExpense()">Record first
+                                        expense</x-ui.button>
                                 </x-ui.empty-state>
                             </td>
                         </tr>
@@ -270,21 +246,19 @@
             <x-ui.card :padded="false">
                 {{-- Categories Filters --}}
                 <div class="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-line">
-                    <form method="GET" action="{{ route('expenses.index') }}" class="flex flex-wrap items-center gap-3 flex-1">
+                    <form method="GET" action="{{ route('expenses.index') }}"
+                        class="flex flex-wrap items-center gap-3 flex-1">
                         <input type="hidden" name="tab" value="categories">
-                        <x-ui.search class="min-w-56 flex-1" placeholder="Search categories..." name="cat_q" :value="request('cat_q')" />
-                        <x-form.select
-                            name="cat_status"
-                            class="w-36"
-                            placeholder="All status"
-                            :options="['active' => 'Active', 'inactive' => 'Inactive']"
-                            :value="request('cat_status')"
-                        />
+                        <x-ui.search class="min-w-56 flex-1" placeholder="Search categories..." name="cat_q"
+                            :value="request('cat_q')" />
+                        <x-form.select name="cat_status" class="w-36" placeholder="All status" :options="['active' => 'Active', 'inactive' => 'Inactive']"
+                            :value="request('cat_status')" />
                         <x-ui.button type="submit" variant="secondary" size="sm">
                             <x-ui.icon name="filter" class="size-3.5" /> Filter
                         </x-ui.button>
                         @if (request()->hasAny(['cat_q', 'cat_status']))
-                            <a href="{{ route('expenses.index', ['tab' => 'categories']) }}" class="text-sm text-neutral-500 hover:text-neutral-700">Clear</a>
+                            <a href="{{ route('expenses.index', ['tab' => 'categories']) }}"
+                                class="text-sm text-neutral-500 hover:text-neutral-700">Clear</a>
                         @endif
                     </form>
                     <x-ui.button icon="plus" size="sm" @click="createCategory()">Add category</x-ui.button>
@@ -327,23 +301,20 @@
                             </td>
                             <td class="text-right">
                                 <div class="flex items-center justify-end gap-1">
-                                    <x-ui.button
-                                        variant="edit"
-                                        size="sm"
-                                        icon="pencil"
-                                        aria-label="Edit"
+                                    <x-ui.button variant="edit" size="sm" icon="pencil" aria-label="Edit"
                                         type="button"
                                         @click="editCategory({
                                             id: {{ $cat->id }},
                                             name: @js($cat->name),
                                             description: @js($cat->description ?? ''),
                                             status: @js($cat->status),
-                                        })"
-                                    />
-                                    <form method="POST" action="{{ route('expense-categories.destroy', $cat) }}" onsubmit="return confirm('Delete this expense category?')">
+                                        })">Edit</x-ui.button>
+                                    <form method="POST" action="{{ route('expense-categories.destroy', $cat) }}"
+                                        onsubmit="return confirm('Delete this expense category?')">
                                         @csrf
                                         @method('DELETE')
-                                        <x-ui.button type="submit" variant="delete" size="sm" icon="trash" aria-label="Delete" />
+                                        <x-ui.button type="submit" variant="delete" size="sm" icon="trash"
+                                            aria-label="Delete">Delete</x-ui.button>
                                     </form>
                                 </div>
                             </td>
@@ -351,12 +322,10 @@
                     @empty
                         <tr>
                             <td colspan="6" class="px-5 py-12 text-center">
-                                <x-ui.empty-state
-                                    icon="tags"
-                                    title="No expense categories found"
-                                    description="Create categories like Rent, Utilities, or Maintenance to organize your expenses."
-                                >
-                                    <x-ui.button icon="plus" size="sm" @click="createCategory()">Add first category</x-ui.button>
+                                <x-ui.empty-state icon="tags" title="No expense categories found"
+                                    description="Create categories like Rent, Utilities, or Maintenance to organize your expenses.">
+                                    <x-ui.button icon="plus" size="sm" @click="createCategory()">Add first
+                                        category</x-ui.button>
                                 </x-ui.empty-state>
                             </td>
                         </tr>
@@ -366,7 +335,8 @@
         </div>
 
         {{-- Modal 1: Add / Edit Expense --}}
-        <x-ui.modal name="expense-form" title="Expense" description="Record operational spending that left the business.">
+        <x-ui.modal name="expense-form" title="Expense"
+            description="Record operational spending that left the business.">
             <form id="expense-form" method="POST" class="space-y-4"
                 :action="expenseEditMode ? `{{ url('expenses') }}/${expenseForm.id}` : '{{ route('expenses.store') }}'">
                 @csrf
@@ -375,89 +345,60 @@
                 </template>
 
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <x-form.select
-                        label="Category"
-                        name="expense_category_id"
-                        placeholder="Choose a category"
-                        x-model="expenseForm.expense_category_id"
-                        :options="$categories"
-                        required
-                    />
-                    <x-form.input
-                        label="Amount"
-                        name="amount"
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        prefix="$"
-                        x-model="expenseForm.amount"
-                        required
-                    />
+                    <x-form.select label="Category" name="expense_category_id" placeholder="Choose a category"
+                        x-model="expenseForm.expense_category_id" :options="$categories" required />
+                    <x-form.input label="Amount" name="amount" type="number" step="0.01" min="0.01"
+                        prefix="$" x-model="expenseForm.amount" required />
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <x-form.input
-                        label="Expense date"
-                        name="expense_date"
-                        type="date"
-                        :max="now()->toDateString()"
-                        x-model="expenseForm.expense_date"
-                        required
-                    />
-                    <x-form.select
-                        label="Paid with"
-                        name="payment_method_id"
-                        placeholder="Cash (default)"
-                        x-model="expenseForm.payment_method_id"
-                        :options="$paymentMethods"
-                    />
+                    <x-form.input label="Expense date" name="expense_date" type="date" :max="now()->toDateString()"
+                        x-model="expenseForm.expense_date" required />
+                    <x-form.select label="Paid with" name="payment_method_id" placeholder="Cash (default)"
+                        x-model="expenseForm.payment_method_id" :options="$paymentMethods" />
                 </div>
 
-                <x-form.textarea label="Description" name="description" placeholder="e.g. Electric bill for October, Printer receipt paper" rows="2" x-model="expenseForm.description" />
+                <x-form.textarea label="Description" name="description"
+                    placeholder="e.g. Electric bill for October, Printer receipt paper" rows="2"
+                    x-model="expenseForm.description" />
             </form>
 
             <x-slot:footer>
-                <x-ui.button variant="secondary" @click="$dispatch('close-modal', 'expense-form')">Cancel</x-ui.button>
-                <x-ui.button type="submit" form="expense-form" x-text="expenseEditMode ? 'Update expense' : 'Save expense'"></x-ui.button>
+                <x-ui.button variant="secondary"
+                    @click="$dispatch('close-modal', 'expense-form')">Cancel</x-ui.button>
+                <x-ui.button type="submit" form="expense-form"
+                    x-text="expenseEditMode ? 'Update expense' : 'Save expense'"></x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
 
         {{-- Modal 2: Add / Edit Expense Category --}}
-        <x-ui.modal name="category-form" title="Expense category" description="Classify your expenses into clear operational buckets.">
+        <x-ui.modal name="category-form" title="Expense category"
+            description="Classify your expenses into clear operational buckets.">
             <form id="category-form" method="POST" class="space-y-4"
-                :action="categoryEditMode ? `{{ url('expense-categories') }}/${categoryForm.id}` : '{{ route('expense-categories.store') }}'">
+                :action="categoryEditMode ? `{{ url('expense-categories') }}/${categoryForm.id}` :
+                    '{{ route('expense-categories.store') }}'">
                 @csrf
                 <template x-if="categoryEditMode">
                     <input type="hidden" name="_method" value="PUT">
                 </template>
 
-                <x-form.input
-                    label="Category name"
-                    name="name"
-                    placeholder="e.g. Rent, Utilities, Packaging, Marketing"
-                    x-model="categoryForm.name"
-                    required
-                />
+                <x-form.input label="Category name" name="name"
+                    placeholder="e.g. Rent, Utilities, Packaging, Marketing" x-model="categoryForm.name" required />
 
-                <x-form.textarea
-                    label="Description"
-                    name="description"
-                    placeholder="Optional notes about what expenses belong here"
-                    rows="3"
-                    x-model="categoryForm.description"
-                />
+                <x-form.textarea label="Description" name="description"
+                    placeholder="Optional notes about what expenses belong here" rows="3"
+                    x-model="categoryForm.description" />
 
-                <x-form.toggle
-                    name="status"
-                    label="Active status"
+                <x-form.toggle name="status" label="Active status"
                     hint="Inactive categories will not appear in the dropdown when recording new expenses."
-                    x-model="categoryForm.status"
-                />
+                    x-model="categoryForm.status" />
             </form>
 
             <x-slot:footer>
-                <x-ui.button variant="secondary" @click="$dispatch('close-modal', 'category-form')">Cancel</x-ui.button>
-                <x-ui.button type="submit" form="category-form" x-text="categoryEditMode ? 'Update category' : 'Save category'"></x-ui.button>
+                <x-ui.button variant="secondary"
+                    @click="$dispatch('close-modal', 'category-form')">Cancel</x-ui.button>
+                <x-ui.button type="submit" form="category-form"
+                    x-text="categoryEditMode ? 'Update category' : 'Save category'"></x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
     </div>

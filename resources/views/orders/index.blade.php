@@ -46,7 +46,7 @@
                     <td><x-ui.status :status="$order->status" /></td>
                     <td class="text-right font-money font-medium"><x-ui.money :amount="$order->total" /></td>
                     <td class="text-right">
-                        <x-ui.button :href="route('orders.show', $order)" variant="view" size="sm" icon="arrow-up-right" aria-label="View order" />
+                        <x-ui.button :href="route('orders.show', $order)" variant="view" size="sm" icon="arrow-up-right" aria-label="View order">View</x-ui.button>
                     </td>
                 </tr>
             @empty

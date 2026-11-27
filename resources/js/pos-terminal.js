@@ -17,6 +17,7 @@ export default ({ products, config }) => ({
     scannerOpen: false,
     scannerLoading: false,
     scannerMessage: "",
+    cameraFacingMode: "environment",
     continuousScan: false,
     scannedFeedback: "",
     lastScannedCode: "",
@@ -36,6 +37,11 @@ export default ({ products, config }) => ({
 
     cart: [],
     heldSales: [],
+    recentlyAddedId: null,
+    removedLine: null,
+    removeTimer: null,
+    addHighlightTimer: null,
+    modalTrigger: null,
     customerId: "",
     discountPercent: 0,
 
@@ -70,8 +76,8 @@ export default ({ products, config }) => ({
                         price: product.price,
                         stock: product.stock,
                         emoji: product.emoji,
-                        image: product.image,
-                        allowDecimal: product.allow_decimal,
+                        image: product.image_url,
+                        allowDecimal: product.unit?.allow_decimal ?? false,
                     };
                 });
         } catch {
@@ -90,6 +96,81 @@ export default ({ products, config }) => ({
                 this.startScannerPolling();
             }
         });
+    },
+    handleShortcut(event) {
+        if (event.altKey || event.ctrlKey || event.metaKey) return;
+
+        if (event.key === "Escape") {
+            if (this.mobileModalOpen) this.closeDialog("mobileModalOpen");
+            else if (this.scannerOpen) this.stopBarcodeScanner();
+            else if (this.paymentOpen) this.closeDialog("paymentOpen");
+            else if (this.receiptOpen) this.closeDialog("receiptOpen");
+            return;
+        }
+
+        if (
+            (this.mobileModalOpen || this.scannerOpen || this.paymentOpen || this.receiptOpen) &&
+            event.key !== "F10"
+        ) {
+            return;
+        }
+
+        if (event.key === "F2") {
+            event.preventDefault();
+            this.$refs.barcode?.focus();
+        } else if (event.key === "F4") {
+            event.preventDefault();
+            this.selectPaymentMethod("cash");
+        } else if (event.key === "F8") {
+            event.preventDefault();
+            this.selectPaymentMethod("khqr");
+        } else if (event.key === "F9") {
+            event.preventDefault();
+            this.selectPaymentMethod("card");
+        } else if (event.key === "F10") {
+            event.preventDefault();
+            this.completeSale();
+        }
+    },
+    selectPaymentMethod(method) {
+        this.method = method;
+        if (method === "cash") {
+            this.$nextTick(() => {
+                const receivedInput = this.paymentOpen
+                    ? this.$refs.paymentReceived
+                    : this.$refs.received;
+                receivedInput?.focus();
+            });
+        }
+    },
+    rememberModalTrigger() {
+        this.modalTrigger = document.activeElement;
+    },
+    closeDialog(name) {
+        this[name] = false;
+        this.$nextTick(() => {
+            this.modalTrigger?.focus?.();
+            this.modalTrigger = null;
+        });
+    },
+    trapDialogFocus(event) {
+        const focusable = Array.from(
+            event.currentTarget.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            ),
+        ).filter((element) => !element.closest('[x-cloak]'));
+        const visibleFocusable = focusable.filter((element) => element.getClientRects().length > 0);
+
+        if (!visibleFocusable.length) return;
+
+        const first = visibleFocusable[0];
+        const last = visibleFocusable[visibleFocusable.length - 1];
+
+        if (event.shiftKey && document.activeElement === first) {
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            first.focus();
+        }
     },
     persistCart() {
         try {
@@ -122,18 +203,23 @@ export default ({ products, config }) => ({
     get categories() {
         return [
             "All",
-            ...new Set(this.products.map((product) => product.category)),
+            ...new Set(
+                this.products.map(
+                    (product) => product.category?.name ?? "Uncategorized",
+                ),
+            ),
         ];
     },
     get filteredProducts() {
         const term = this.query.trim().toLowerCase();
         return this.products.filter((product) => {
             const inCategory =
-                this.category === "All" || product.category === this.category;
+                this.category === "All" ||
+                (product.category?.name ?? "Uncategorized") === this.category;
             const matches =
                 !term ||
                 [product.name, product.sku, product.barcode].some((value) =>
-                    value.toLowerCase().includes(term),
+                    String(value ?? "").toLowerCase().includes(term),
                 );
             return product.status === "active" && inCategory && matches;
         });
@@ -141,11 +227,13 @@ export default ({ products, config }) => ({
 
     // ---------- cart ----------
     addToCart(product) {
-        const minimumQuantity = product.allow_decimal ? 0.01 : 1;
+        const allowDecimal = product.unit?.allow_decimal ?? false;
+        const minimumQuantity = allowDecimal ? 0.01 : 1;
         if (product.stock < minimumQuantity) return;
         const line = this.cart.find((item) => item.id === product.id);
         if (line) {
             this.increase(line);
+            this.highlightCartLine(product.id);
             return;
         }
         const quantity = Math.min(1, product.stock);
@@ -153,12 +241,20 @@ export default ({ products, config }) => ({
             id: product.id,
             name: product.name,
             emoji: product.emoji,
-            image: product.image,
+            image: product.image_url,
             price: product.price,
             stock: product.stock,
-            allowDecimal: product.allow_decimal,
+            allowDecimal,
             quantity,
         });
+        this.highlightCartLine(product.id);
+    },
+    highlightCartLine(productId) {
+        this.recentlyAddedId = productId;
+        clearTimeout(this.addHighlightTimer);
+        this.addHighlightTimer = setTimeout(() => {
+            this.recentlyAddedId = null;
+        }, 1200);
     },
     increase(line) {
         const step = line.allowDecimal ? 0.1 : 1;
@@ -174,12 +270,33 @@ export default ({ products, config }) => ({
         else this.removeFromCart(line);
     },
     removeFromCart(line) {
+        clearTimeout(this.removeTimer);
+        this.removedLine = {
+            line: { ...line },
+            index: this.cart.findIndex((item) => item.id === line.id),
+        };
         this.cart = this.cart.filter((item) => item.id !== line.id);
+        this.removeTimer = setTimeout(() => {
+            this.removedLine = null;
+        }, 5000);
+    },
+    undoRemove() {
+        if (!this.removedLine) return;
+        this.cart.splice(this.removedLine.index, 0, this.removedLine.line);
+        this.removedLine = null;
+        clearTimeout(this.removeTimer);
+    },
+    requestClearCart(confirmationMessage) {
+        if (!this.cart.length) return;
+        if (window.confirm(confirmationMessage)) {
+            this.clearCart();
+        }
     },
     clearCart() {
         this.cart = [];
         this.discountPercent = 0;
         this.customerId = "";
+        this.received = "";
     },
     scanBarcode() {
         const code = this.barcode.trim();
@@ -210,16 +327,19 @@ export default ({ products, config }) => ({
         }
     },
     async startBarcodeScanner() {
+        if (!this.scannerOpen) this.rememberModalTrigger();
         this.scannerMessage = "";
         this.scannerLoading = true;
         this.scannerOpen = true;
 
         try {
             await this.$nextTick();
+            document.querySelector("[data-camera-close]")?.focus();
 
             if (!this.scannerInstance) {
                 this.scannerInstance = createCameraScanner({
                     elementId: "pos-barcode-reader",
+                    facingMode: this.cameraFacingMode,
                     onScan: (code) => {
                         const now = Date.now();
                         if (code === this.lastScannedCode && now - this.lastScannedAt < 1500) {
@@ -269,8 +389,22 @@ export default ({ products, config }) => ({
         }
         event.target.value = "";
     },
+    async switchBarcodeCamera() {
+        if (!this.scannerInstance) return;
+
+        this.scannerLoading = true;
+        this.scannerMessage = "";
+
+        try {
+            await this.scannerInstance.switchCamera(this.cameraFacingMode);
+        } catch (error) {
+            this.scannerMessage = error?.message || "Could not switch cameras.";
+        } finally {
+            this.scannerLoading = false;
+        }
+    },
     async stopBarcodeScanner() {
-        this.scannerOpen = false;
+        this.closeDialog("scannerOpen");
         this.scannerLoading = false;
         if (this.scannerInstance) {
             await this.scannerInstance.stop();
@@ -280,6 +414,8 @@ export default ({ products, config }) => ({
         this.stopBarcodeScanner();
         this.stopScannerPolling();
         if (this.countdownTimer) clearInterval(this.countdownTimer);
+        clearTimeout(this.removeTimer);
+        clearTimeout(this.addHighlightTimer);
     },
 
     // ---------- mobile scanner integration ----------
@@ -329,7 +465,10 @@ export default ({ products, config }) => ({
         }
     },
     async openMobileScannerModal() {
+        this.rememberModalTrigger();
         this.mobileModalOpen = true;
+        await this.$nextTick();
+        document.querySelector("[data-mobile-close]")?.focus();
         await this.fetchMobileSession();
     },
     async fetchMobileSession() {
@@ -355,6 +494,8 @@ export default ({ products, config }) => ({
                 if (result.data.qr_url) {
                     await this.renderQr(result.data.qr_url);
                 }
+            } else {
+                this.mobileError = result.message || "Could not create scanner session.";
             }
         } catch {
             this.mobileError = "Could not create scanner session.";
@@ -385,6 +526,8 @@ export default ({ products, config }) => ({
                 if (result.data.qr_url) {
                     await this.renderQr(result.data.qr_url);
                 }
+            } else {
+                this.mobileError = result.message || "Could not refresh pairing code.";
             }
         } catch {
             this.mobileError = "Could not refresh pairing code.";
@@ -468,6 +611,7 @@ export default ({ products, config }) => ({
         this.cart = [];
         this.customerId = "";
         this.discountPercent = 0;
+        this.received = "";
     },
     resumeSale() {
         const held = this.heldSales.pop();
@@ -543,10 +687,12 @@ export default ({ products, config }) => ({
     },
     openPayment() {
         if (!this.cart.length) return;
+        this.rememberModalTrigger();
         this.method = "cash";
         this.received = "";
         this.checkoutError = "";
         this.paymentOpen = true;
+        this.$nextTick(() => this.$refs.paymentReceived?.focus());
     },
     pressKey(key) {
         if (key === "back") this.received = this.received.slice(0, -1);
@@ -602,8 +748,10 @@ export default ({ products, config }) => ({
             this.customerId = "";
             this.discountPercent = 0;
             this.received = "";
+            if (!this.paymentOpen) this.rememberModalTrigger();
             this.paymentOpen = false;
             this.receiptOpen = true;
+            this.$nextTick(() => document.querySelector("[data-receipt-focus]")?.focus());
         } catch (error) {
             this.checkoutError =
                 error.message || "Unable to reach the server. Try again.";
@@ -613,7 +761,7 @@ export default ({ products, config }) => ({
     },
     startNewSale() {
         this.clearCart();
-        this.receiptOpen = false;
+        this.closeDialog("receiptOpen");
         this.lastSale = null;
     },
 });

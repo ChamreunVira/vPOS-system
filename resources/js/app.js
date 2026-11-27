@@ -12,6 +12,7 @@ window.flatpickr = flatpickr;
 Alpine.data("posTerminal", posTerminal);
 Alpine.data("productForm", productForm);
 Alpine.data("salesChart", salesChart);
+
 Alpine.start();
 
 document.addEventListener("DOMContentLoaded", () => {

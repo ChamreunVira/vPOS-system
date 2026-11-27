@@ -32,10 +32,10 @@
                         <td><x-ui.status :status="$category['status']" /></td>
                         <td class="text-right">
                             <div class="flex justify-end gap-1">
-                                <span class="contents" @click="edit({{ Js::from($category) }})"><x-ui.button variant="edit" size="sm" icon="pencil" aria-label="Edit" /></span>
+                                <span class="contents" @click="edit({{ Js::from($category) }})"><x-ui.button variant="edit" size="sm" icon="pencil" aria-label="Edit">Edit</x-ui.button></span>
                                 <form method="POST" action="{{ route('categories.destroy', $category['id']) }}" onsubmit="return confirm('Delete this category?')">
                                     @csrf @method('DELETE')
-                                    <x-ui.button type="submit" variant="delete" size="sm" icon="trash" aria-label="Delete" />
+                                    <x-ui.button type="submit" variant="delete" size="sm" icon="trash" aria-label="Delete">Delete</x-ui.button>
                                 </form>
                             </div>
                         </td>

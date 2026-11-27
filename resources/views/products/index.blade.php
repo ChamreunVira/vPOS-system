@@ -53,16 +53,16 @@
                     <td><x-ui.status :status="$product->status" /></td>
                     <td class="text-right">
                         <div class="flex justify-end gap-1">
-                            <x-ui.button :href="route('products.show', $product)" variant="view" size="sm" icon="eye"
-                                aria-label="View product" />
+                            <x-ui.button :href="route('products.show', $product)" variant="view" size="sm" icon="arrow-up-right"
+                                aria-label="View product">View</x-ui.button>
                             <x-ui.button :href="route('products.edit', $product)" variant="edit" size="sm" icon="pencil"
-                                aria-label="Edit product" />
+                                aria-label="Edit product">Edit</x-ui.button>
                             @if ($product->status === 'active')
                                 <form method="POST" action="{{ route('products.destroy', $product) }}"
                                     onsubmit="return confirm('Deactivate this product? It will remain in sales history.')">
                                     @csrf @method('DELETE')
                                     <x-ui.button type="submit" variant="warning" size="sm" icon="pause"
-                                        aria-label="Deactivate product" />
+                                        aria-label="Deactivate product">Deactivate</x-ui.button>
                                 </form>
                             @endif
                         </div>

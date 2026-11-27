@@ -3,14 +3,18 @@
 namespace App\Models;
 
 use Database\Factories\ProductFactory;
+use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 #[Fillable(['category_id', 'unit_id', 'name', 'sku', 'barcode', 'cost', 'price', 'stock', 'min_stock', 'image', 'status'])]
+#[Appends(['image_url'])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
@@ -29,6 +33,20 @@ class Product extends Model
             'stock' => 'decimal:4',
             'min_stock' => 'decimal:4',
         ];
+    }
+
+    /**
+     * Get the URL for the product image when the model is serialized.
+     *
+     * @return Attribute<string|null, never>
+     */
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::get(fn (): ?string => match (true) {
+            blank($this->image) => null,
+            str_starts_with($this->image, 'http') => $this->image,
+            default => Storage::disk('public')->url($this->image),
+        });
     }
 
     /**

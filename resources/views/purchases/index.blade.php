@@ -1,7 +1,8 @@
 <x-layouts.app title="Purchases">
     <x-ui.flash />
 
-    <x-ui.page-header title="Purchase orders" subtitle="Manage stock orders from suppliers, update costs, and receive inventory.">
+    <x-ui.page-header title="Purchase orders"
+        subtitle="Manage stock orders from suppliers, update costs, and receive inventory.">
         <x-ui.button :href="route('purchases.export', request()->only(['q', 'status', 'supplier_id', 'date']))" variant="secondary" icon="download">Export</x-ui.button>
         <x-ui.button :href="route('purchases.create')" icon="plus">New purchase order</x-ui.button>
     </x-ui.page-header>
@@ -22,18 +23,18 @@
     </div>
 
     <x-ui.card :padded="false">
-        <form method="GET" action="{{ route('purchases.index') }}" class="flex flex-wrap items-end gap-3 border-b border-line p-4">
-            <x-ui.search name="q" :value="request('q')" class="min-w-56 flex-1" placeholder="Search PO #, supplier or notes" />
+        <form method="GET" action="{{ route('purchases.index') }}"
+            class="flex flex-wrap items-end gap-3 border-b border-line p-4">
+            <x-ui.search name="q" :value="request('q')" class="min-w-56 flex-1"
+                placeholder="Search PO #, supplier or notes" />
 
             <div class="w-40">
-                <x-form.select label="Status" name="status" placeholder="All statuses"
-                    :options="['pending' => 'Pending', 'received' => 'Received', 'cancelled' => 'Cancelled']"
+                <x-form.select label="Status" name="status" placeholder="All statuses" :options="['pending' => 'Pending', 'received' => 'Received', 'cancelled' => 'Cancelled']"
                     :value="request('status')" />
             </div>
 
             <div class="w-48">
-                <x-form.select label="Supplier" name="supplier_id" placeholder="All suppliers"
-                    :options="$suppliers"
+                <x-form.select label="Supplier" name="supplier_id" placeholder="All suppliers" :options="$suppliers"
                     :value="request('supplier_id')" />
             </div>
 
@@ -63,7 +64,8 @@
             @forelse ($purchases as $purchase)
                 <tr>
                     <td>
-                        <a href="{{ route('purchases.show', $purchase) }}" class="font-medium text-neutral-900 hover:underline">
+                        <a href="{{ route('purchases.show', $purchase) }}"
+                            class="font-medium text-neutral-900 hover:underline">
                             {{ $purchase->purchase_number }}
                         </a>
                         @if ($purchase->notes)
@@ -90,24 +92,30 @@
                     </td>
                     <td class="text-right">
                         <div class="flex items-center justify-end gap-1">
-                            <x-ui.button :href="route('purchases.show', $purchase)" variant="view" size="sm" icon="eye" aria-label="View {{ $purchase->purchase_number }}" />
+                            <x-ui.button :href="route('purchases.show', $purchase)" variant="view" size="sm" icon="arrow-up-right"
+                                aria-label="View {{ $purchase->purchase_number }}">View</x-ui.button>
 
                             @if ($purchase->canEdit())
-                                <x-ui.button :href="route('purchases.edit', $purchase)" variant="edit" size="sm" icon="pencil" aria-label="Edit {{ $purchase->purchase_number }}" />
+                                <x-ui.button :href="route('purchases.edit', $purchase)" variant="edit" size="sm" icon="pencil"
+                                    aria-label="Edit {{ $purchase->purchase_number }}">Edit</x-ui.button>
                             @endif
 
                             @if ($purchase->canCancel())
-                                <form method="POST" action="{{ route('purchases.cancel', $purchase) }}" onsubmit="return confirm('Are you sure you want to cancel purchase order {{ $purchase->purchase_number }}?')">
+                                <form method="POST" action="{{ route('purchases.cancel', $purchase) }}"
+                                    onsubmit="return confirm('Are you sure you want to cancel purchase order {{ $purchase->purchase_number }}?')">
                                     @csrf
-                                    <x-ui.button type="submit" variant="warning" size="sm" icon="x" aria-label="Cancel {{ $purchase->purchase_number }}" />
+                                    <x-ui.button type="submit" variant="warning" size="sm" icon="x"
+                                        aria-label="Cancel {{ $purchase->purchase_number }}">Cancel</x-ui.button>
                                 </form>
                             @endif
 
                             @if ($purchase->canDelete())
-                                <form method="POST" action="{{ route('purchases.destroy', $purchase) }}" onsubmit="return confirm('Are you sure you want to delete purchase order {{ $purchase->purchase_number }}?')">
+                                <form method="POST" action="{{ route('purchases.destroy', $purchase) }}"
+                                    onsubmit="return confirm('Are you sure you want to delete purchase order {{ $purchase->purchase_number }}?')">
                                     @csrf
                                     @method('DELETE')
-                                    <x-ui.button type="submit" variant="delete" size="sm" icon="trash" aria-label="Delete {{ $purchase->purchase_number }}" />
+                                    <x-ui.button type="submit" variant="delete" size="sm" icon="trash"
+                                        aria-label="Delete {{ $purchase->purchase_number }}">Delete</x-ui.button>
                                 </form>
                             @endif
                         </div>
@@ -116,7 +124,8 @@
             @empty
                 <tr>
                     <td colspan="8" class="px-5 py-12 text-center">
-                        <x-ui.empty-state icon="file-text" title="No purchase orders found" description="Create a purchase order to record new items and increase your stock." />
+                        <x-ui.empty-state icon="file-text" title="No purchase orders found"
+                            description="Create a purchase order to record new items and increase your stock." />
                     </td>
                 </tr>
             @endforelse

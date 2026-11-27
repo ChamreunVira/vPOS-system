@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ProductRequest;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Unit;
@@ -52,17 +53,15 @@ class ProductController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(ProductRequest $request): RedirectResponse
     {
-        $data = $this->validatedData($request);
+        $data = $request->payload();
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('products', 'public');
         }
 
-        $data['status'] = $request->boolean('status') ? 'active' : 'inactive';
-
-        $product = DB::transaction(function () use ($data): Product {
+        DB::transaction(function () use ($data): Product {
             $product = Product::create($data);
             $product->update(['sku' => 'PRD-'.str_pad($product->id, 6, '0', STR_PAD_LEFT)]);
 
@@ -88,9 +87,9 @@ class ProductController extends Controller
         ]);
     }
 
-    public function update(Request $request, Product $product): RedirectResponse
+    public function update(ProductRequest $request, Product $product): RedirectResponse
     {
-        $data = $this->validatedData($request);
+        $data = $request->payload();
         $oldImage = $product->image;
 
         if ($request->hasFile('image')) {
@@ -98,8 +97,6 @@ class ProductController extends Controller
         } else {
             unset($data['image']);
         }
-
-        $data['status'] = $request->boolean('status') ? 'active' : 'inactive';
 
         $product->update($data);
 
@@ -151,24 +148,5 @@ class ProductController extends Controller
             ->orderBy('name')
             ->pluck('name', 'id')
             ->all();
-    }
-
-    /**
-     * @return array{category_id: int, unit_id: int, name: string, barcode: ?string, cost: numeric-string, price: numeric-string, stock: numeric-string, min_stock: numeric-string, image: mixed, status: string}
-     */
-    private function validatedData(Request $request): array
-    {
-        return $request->validate([
-            'category_id' => ['required', 'integer', 'exists:categories,id'],
-            'unit_id' => ['required', 'integer', 'exists:units,id'],
-            'name' => ['required', 'string', 'max:255'],
-            'barcode' => ['nullable', 'string', 'max:255'],
-            'cost' => ['required', 'numeric', 'min:0'],
-            'price' => ['required', 'numeric', 'min:0'],
-            'stock' => ['required', 'numeric', 'min:0'],
-            'min_stock' => ['required', 'numeric', 'min:0'],
-            'image' => ['nullable', 'image', 'max:2048'],
-            'status' => ['required', 'boolean'],
-        ]);
     }
 }

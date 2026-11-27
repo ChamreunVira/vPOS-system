@@ -140,7 +140,7 @@ class ExpenseController extends Controller
 
     public function export(): StreamedResponse
     {
-        $filename = 'expenses-'.now()->format('Y-m-d').'.csv';
+        $filename = 'expenses-' . now()->format('Y-m-d') . '.csv';
 
         return response()->streamDownload(function (): void {
             $handle = fopen('php://output', 'w');
