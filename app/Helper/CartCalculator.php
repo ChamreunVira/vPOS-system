@@ -71,12 +71,8 @@ class CartCalculator
      *
      * @throws ValidationException
      */
-    public static function process(
-        array $items,
-        Collection|array $products,
-        float $discountPercent = 0.0,
-        float $taxRate = 0.0
-    ): array {
+    public static function process(array $items, Collection|array $products, float $discountPercent = 0.0, float $taxRate = 0.0): array
+    {
         $lineItems = [];
         $subtotal = 0.0;
 

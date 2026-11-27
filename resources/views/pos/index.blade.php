@@ -87,7 +87,7 @@
                 </template>
             </div>
 
-            <div class="min-h-0 flex-1 overflow-y-auto p-4 scrollbar-gutter:stable">
+            <div class="min-h-0 flex-1 overflow-y-auto p-4 scrollbar-gutter:stable_both-edges">
                 <p x-show="notice" x-cloak role="status" aria-live="polite"
                     class="mb-3 flex items-center gap-2 rounded-lg bg-sky-50 px-4 py-3 text-sm text-sky-950 ring-1 ring-sky-200">
                     <x-ui.icon name="info" class="size-4" />
@@ -191,16 +191,18 @@
                 </select>
             </div>
 
-            {{-- Cart lines (the only scrolling area) --}}
+            {{-- Cart lines (the only scrolling area).
+                 Horizontal padding lives on the <li> only; the symmetric gutter keeps left/right space equal
+                 whether or not a classic scrollbar is shown. --}}
             <ul
-                class="min-h-0 flex-1 divide-y divide-neutral-100 overflow-y-auto overscroll-contain px-4 scrollbar-gutter:stable sm:px-5">
+                class="min-h-0 flex-1 divide-y divide-neutral-100 overflow-y-auto overscroll-contain scrollbar-gutter:stable_both-edges">
                 <template x-for="line in cart" :key="line.id">
-                    {{-- Fixed 3-column grid: [image] [name + qty controls] [remove + line total] --}}
-                    <li :class="recentlyAddedId === line.id ? 'bg-emerald-50 ring-1 ring-inset ring-emerald-300' : 'bg-white'"
-                        class="grid grid-cols-[2.75rem_minmax(0,1fr)_5.5rem] items-center gap-x-3 gap-y-2 rounded-lg px-2 py-3 transition-colors duration-200">
+                    {{-- 3 fixed columns: [image] [name + qty controls] [remove + line total] --}}
+                    <li :class="recentlyAddedId === line.id ? 'bg-emerald-50' : 'bg-white'"
+                        class="grid grid-cols-[2.75rem_minmax(0,1fr)_5rem] items-center gap-x-3 gap-y-1.5 px-4 py-3 transition-colors duration-200 motion-reduce:transition-none">
                         {{-- Image --}}
                         <span
-                            class="row-span-2 flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-neutral-100 text-2xl">
+                            class="row-span-2 flex size-11 shrink-0 items-center justify-center self-start overflow-hidden rounded-lg bg-neutral-100 text-2xl">
                             <img x-show="line.image" :src="line.image" :alt="line.name"
                                 class="size-full object-cover" x-cloak>
                             <span x-show="!line.image" class="flex items-center justify-center" aria-hidden="true">
@@ -216,12 +218,11 @@
                                 x-text="usd(line.price) + ' each'"></p>
                         </div>
 
-                        {{-- Remove --}}
+                        {{-- Remove: icon-only. Negative margins keep the 44px tap target without inflating the row --}}
                         <button type="button" @click="removeFromCart(line)"
-                            class="col-start-3 row-start-1 inline-flex min-h-11 items-center justify-center justify-self-end gap-1.5 rounded-lg px-2 text-xs font-semibold text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700"
+                            class="col-start-3 row-start-1 -my-2 -mr-3 inline-flex size-11 items-center justify-center justify-self-end rounded-lg text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700"
                             aria-label="{{ __('Remove item') }}" title="{{ __('Remove item') }}">
-                            <x-ui.icon name="trash" class="size-4" />
-                            <span>{{ __('Remove') }}</span>
+                            <x-ui.icon name="trash" class="size-5" />
                         </button>
 
                         {{-- Quantity controls --}}
@@ -229,34 +230,34 @@
                             class="col-start-2 row-start-2 flex w-fit shrink-0 items-center rounded-lg border border-neutral-300"
                             :aria-label="'Quantity controls for ' + line.name">
                             <span
-                                class="shrink-0 px-2 text-[10px] font-semibold uppercase tracking-wide text-neutral-500">{{ __('Qty') }}</span>
+                                class="shrink-0 pl-2 pr-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-500">{{ __('Qty') }}</span>
                             <button type="button" @click="decrease(line)"
-                                class="inline-flex size-11 shrink-0 items-center justify-center rounded-l-lg text-neutral-800 hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-950"
+                                class="inline-flex size-10 shrink-0 items-center justify-center text-neutral-800 hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-950"
                                 aria-label="{{ __('Decrease quantity') }}" title="{{ __('Decrease quantity') }}">
-                                <x-ui.icon name="minus" class="size-5" />
+                                <x-ui.icon name="minus" class="size-4" />
                             </button>
                             <input x-show="line.allowDecimal" type="number" min="0.01" step="0.01"
                                 :max="line.stock" x-model.number="line.quantity"
                                 @change="line.quantity = Number.isFinite(Number($event.target.value)) ? Math.max(0.01, Math.min(line.stock, Math.round(Number($event.target.value) * 100) / 100)) : 0.01"
-                                class="font-money h-11 w-16 shrink-0 border-0 bg-transparent p-0 text-center text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950"
+                                class="font-money h-10 w-16 shrink-0 border-0 bg-transparent p-0 text-center text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950"
                                 :aria-label="'Quantity for ' + line.name">
                             <span x-show="!line.allowDecimal"
-                                class="font-money inline-block min-w-9 shrink-0 px-1 text-center text-sm tabular-nums"
+                                class="font-money inline-block min-w-8 shrink-0 text-center text-sm tabular-nums"
                                 x-text="line.quantity"></span>
                             <button type="button" @click="increase(line)" :disabled="line.quantity >= line.stock"
-                                class="inline-flex size-11 shrink-0 items-center justify-center rounded-r-lg text-neutral-800 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-950"
+                                class="inline-flex size-10 shrink-0 items-center justify-center text-neutral-800 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-950"
                                 aria-label="{{ __('Increase quantity') }}" title="{{ __('Increase quantity') }}">
-                                <x-ui.icon name="plus" class="size-5" />
+                                <x-ui.icon name="plus" class="size-4" />
                             </button>
                         </div>
 
                         {{-- Line total --}}
                         <span
-                            class="font-money col-start-3 row-start-2 whitespace-nowrap text-right text-sm font-medium tabular-nums"
+                            class="font-money col-start-3 row-start-2 whitespace-nowrap text-right text-sm font-semibold tabular-nums"
                             x-text="usd(line.price * line.quantity)"></span>
                     </li>
                 </template>
-                <li x-show="! cart.length" x-cloak class="py-8">
+                <li x-show="! cart.length" x-cloak class="px-4 py-8">
                     <x-ui.empty-state icon="cart" :title="__('Your sale is empty')" :description="__('Scan a barcode or tap a product to add it here.')" />
                 </li>
             </ul>
@@ -324,10 +325,11 @@
                 {{-- Payment methods --}}
                 <div class="grid grid-cols-3 gap-2" role="group" aria-label="{{ __('Payment method') }}">
                     @foreach ([
-        'cash' => [__('Cash'), 'banknote', 'bg-emerald-600 hover:bg-emerald-500', 'bg-emerald-700 hover:bg-emerald-800'],
-        'khqr' => [__('KHQR'), 'qr-code', 'bg-red-600 hover:bg-red-500', 'bg-red-700 hover:bg-red-800'],
-        'card' => [__('Card'), 'credit-card', 'bg-blue-600 hover:bg-blue-500', 'bg-blue-700 hover:bg-blue-800'],
-    ] as $key => [$label, $icon, $activeColor, $inactiveColor])
+                            'cash' => [__('Cash'), 'banknote', 'bg-emerald-600 hover:bg-emerald-500', 'bg-emerald-500 hover:bg-emerald-600'],
+                            'khqr' => [__('KHQR'), 'qr-code', 'bg-red-600 hover:bg-red-500', 'bg-red-500 hover:bg-red-600'],
+                            'card' => [__('Card'), 'credit-card', 'bg-blue-600 hover:bg-blue-500', 'bg-blue-500 hover:bg-blue-600'],
+                        ] as $key 
+                        => [$label, $icon, $activeColor, $inactiveColor])
                         <button type="button" :aria-pressed="method === '{{ $key }}'"
                             @click="selectPaymentMethod('{{ $key }}')"
                             :class="method === '{{ $key }}' ?
@@ -342,59 +344,8 @@
                     @endforeach
                 </div>
 
-                {{-- Cash --}}
-                <div x-show="method === 'cash'" x-cloak class="space-y-2.5">
-                    <div class="flex items-center gap-2">
-                        <div class="relative min-w-0 flex-1">
-                            <label for="cash-received"
-                                class="mb-1.5 flex items-center gap-2 text-xs font-semibold text-neutral-700">
-                                <x-ui.icon name="banknote" /> {{ __('Cash received') }}
-                            </label>
-                            <div class="relative">
-                                <span
-                                    class="font-money pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-600">$</span>
-                                <input id="cash-received" x-ref="received" x-model="received" type="text"
-                                    inputmode="decimal" autocomplete="off" placeholder="{{ __('Enter amount') }}"
-                                    @keydown.enter.prevent="canComplete && completeSale()"
-                                    class="font-money h-12 w-full rounded-lg border border-neutral-300 pl-7 pr-3 text-lg tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2">
-                            </div>
-                        </div>
-                        <div class="min-w-28 shrink-0 text-right">
-                            <p class="text-xs font-semibold text-neutral-700">{{ __('Change to give') }}</p>
-                            <p class="font-money text-xl font-bold tabular-nums text-emerald-800"
-                                x-text="usd(change)"></p>
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap gap-1.5">
-                        <template x-for="amount in quickAmounts" :key="amount">
-                            <button type="button" @click="received = String(Number(amount.toFixed(2)))"
-                                class="font-money min-h-10 rounded-lg border border-neutral-300 px-3 text-xs font-medium tabular-nums text-neutral-900 transition hover:bg-neutral-50 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950"
-                                x-text="amount === total ? 'Exact ' + usd(amount) : usd(amount)"></button>
-                        </template>
-                    </div>
-                    <p class="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-900 ring-1 ring-red-200"
-                        x-show="receivedAmount > 0 && receivedAmount < total" x-cloak role="alert">
-                        <x-ui.icon name="alert-triangle" class="size-4" />
-                        <span>{{ __('Customer still owes') }} <span class="font-money font-bold tabular-nums"
-                                x-text="usd(total - receivedAmount)"></span>.</span>
-                    </p>
-                </div>
-
-                {{-- KHQR --}}
-                <p x-show="method === 'khqr'" x-cloak
-                    class="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-950 ring-1 ring-red-200">
-                    <x-ui.icon name="qr-code" class="size-5 shrink-0" />
-                    Customer scans your merchant QR in any Bakong app. Confirm the payment before completing.
-                </p>
-
-                {{-- Card --}}
-                <p x-show="method === 'card'" x-cloak
-                    class="flex items-center gap-2 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-950 ring-1 ring-sky-200">
-                    <x-ui.icon name="credit-card" class="size-5 shrink-0" />
-                    Process on your card terminal, then complete the sale once approved.
-                </p>
-
-                <div x-show="checkoutError" x-cloak role="alert"
+                {{-- Checkout errors (hidden while the payment modal is open; the modal shows its own) --}}
+                <div x-show="checkoutError && !paymentOpen" x-cloak role="alert"
                     class="flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-950 ring-1 ring-red-200">
                     <x-ui.icon name="alert-triangle" class="mt-0.5 size-4" />
                     <span class="min-w-0 flex-1" x-text="checkoutError"></span>
@@ -404,29 +355,15 @@
                     </button>
                 </div>
 
-                <x-ui.button size="lg" class="w-full" @click="completeSale()" x-bind:disabled="!canComplete">
-                    <span x-show="completing" x-cloak
-                        class="mr-2 inline-flex size-4 animate-spin rounded-full border-2 border-current border-r-transparent"
-                        aria-hidden="true"></span>
-                    <x-ui.icon name="check" x-show="!completing" class="mr-2 size-5" />
-                    <span x-text="completing ? 'Saving sale…' : 'Complete sale · ' + usd(total)"></span>
+                {{-- Opens the payment modal, where the cash received input lives --}}
+                <x-ui.button size="lg" class="w-full" x-bind:disabled="!cart.length"
+                    @click="paymentOpen = true; $nextTick(() => $refs.paymentReceived?.focus())">
+                    <x-ui.icon name="wallet" class="mr-2 size-5" />
+                    <span x-text="'Collect payment · ' + usd(total)"></span>
                 </x-ui.button>
                 <p x-show="!cart.length" class="text-center text-xs font-medium text-neutral-700">
                     {{ __('Add items first to complete this sale.') }}
                 </p>
-                <p x-show="cart.length && method === 'cash' && receivedAmount < total" x-cloak
-                    class="text-center text-xs font-medium text-red-900">
-                    {{ __('Enter') }} <span class="font-money tabular-nums"
-                        x-text="usd(total - receivedAmount)"></span>
-                    {{ __('more to complete the sale.') }}
-                </p>
-                <p x-show="canComplete" x-cloak class="text-center text-xs font-medium text-emerald-800">
-                    {{ __('Ready to complete sale.') }}
-                </p>
-                {{-- <p class="text-center text-[11px] text-neutral-500">
-                    <kbd class="rounded border border-neutral-300 bg-white px-1.5 py-0.5 font-mono">F10</kbd>
-                    {{ __('Complete sale') }}
-                </p> --}}
             </div>
         </aside>
 
@@ -512,6 +449,7 @@
             </div>
         </div>
 
+        {{-- Payment modal: cash received input, quick amounts, numpad and change --}}
         <div x-show="paymentOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4"
             role="dialog" aria-modal="true" aria-labelledby="payment-modal-title"
             @keydown.tab.prevent="trapDialogFocus($event)" @click.self="closeDialog('paymentOpen')">
@@ -535,9 +473,9 @@
                             class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800"></p>
                         <div class="grid grid-cols-3 gap-2">
                             @foreach ([
-        'cash' => [__('Cash'), 'banknote', 'bg-emerald-600 ring-emerald-700', 'border-emerald-200 bg-emerald-50 text-emerald-950'],
-        'khqr' => [__('KHQR'), 'qr-code', 'bg-red-600 ring-red-700', 'border-red-200 bg-red-50 text-red-950'],
-        'card' => [__('Card'), 'credit-card', 'bg-blue-600 ring-blue-700', 'border-blue-200 bg-blue-50 text-blue-950'],
+        'cash' => [__('Cash'), 'banknote', 'bg-emerald-500 ring-emerald-700', 'border-emerald-200 bg-emerald-50 text-emerald-950'],
+        'khqr' => [__('KHQR'), 'qr-code', 'bg-red-500 ring-red-700', 'border-red-200 bg-red-50 text-red-950'],
+        'card' => [__('Card'), 'credit-card', 'bg-blue-500 ring-blue-700', 'border-blue-200 bg-blue-50 text-blue-950'],
     ] as $key => [$label, $icon, $selectedColor, $unselectedColor])
                                 <button type="button" @click="selectPaymentMethod('{{ $key }}')"
                                     :aria-pressed="method === '{{ $key }}'"
@@ -552,15 +490,19 @@
                             @endforeach
                         </div>
 
-                        <div x-show="method === 'cash'" class="space-y-3">
+                        <div x-show="method === 'cash'" x-cloak class="space-y-3">
                             <label for="payment-cash-received" class="flex items-center gap-2 text-sm font-semibold">
                                 <x-ui.icon name="banknote" /> {{ __('Cash received') }}
                             </label>
-                            <input id="payment-cash-received" x-ref="paymentReceived" x-model="received"
-                                type="text" inputmode="decimal"
-                                @keydown.enter.prevent="canComplete && completeSale()"
-                                class="font-money h-12 w-full rounded-lg border border-neutral-300 px-3 text-lg tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950"
-                                placeholder="{{ __('Enter amount') }}">
+                            <div class="relative">
+                                <span
+                                    class="font-money pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-600">$</span>
+                                <input id="payment-cash-received" x-ref="paymentReceived" x-model="received"
+                                    type="text" inputmode="decimal" autocomplete="off"
+                                    @keydown.enter.prevent="canComplete && completeSale()"
+                                    class="font-money h-12 w-full rounded-lg border border-neutral-300 pl-7 pr-3 text-lg tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950"
+                                    placeholder="{{ __('Enter amount') }}">
+                            </div>
                             <div class="flex flex-wrap gap-2">
                                 <template x-for="amount in quickAmounts" :key="amount">
                                     <button type="button" @click="received = String(Number(amount.toFixed(2)))"
@@ -592,7 +534,7 @@
                         <div x-show="method === 'khqr'" x-cloak
                             class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-neutral-400 p-8 text-center">
                             <x-ui.icon name="qr-code" class="size-32 text-neutral-950" />
-                            <p class="text-sm font-medium">Ask the customer to scan with any Bakong banking app.</p>
+                            <p cPO-000001	Bunchhean Group	Nov 27, 2026	—lass="text-sm font-medium">Ask the customer to scan with any Bakong banking app.</p>
                             <p class="text-xs text-ink-muted">Ask the customer to scan your merchant QR and verify the
                                 payment before completing the sale.</p>
                         </div>
@@ -608,15 +550,15 @@
                     <div class="space-y-4 md:col-span-2">
                         <div class="rounded-xl bg-neutral-100 p-4">
                             <p class="text-sm text-ink-muted">Amount due</p>
-                            <p class="font-money text-3xl font-semibold" x-text="usd(total)"></p>
-                            <p class="font-money text-sm text-ink-muted" x-text="khr(total)"></p>
+                            <p class="font-money text-3xl font-semibold tabular-nums" x-text="usd(total)"></p>
+                            <p class="font-money text-sm tabular-nums text-ink-muted" x-text="khr(total)"></p>
                         </div>
-                        <div x-show="method === 'cash'"
+                        <div x-show="method === 'cash'" x-cloak
                             class="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
                             <p class="text-sm font-semibold text-emerald-950">{{ __('Change to give') }}</p>
                             <p class="font-money text-3xl font-bold tabular-nums text-emerald-800"
                                 x-text="usd(change)"></p>
-                            <p class="font-money text-sm text-emerald-900" x-text="khr(change)"></p>
+                            <p class="font-money text-sm tabular-nums text-emerald-900" x-text="khr(change)"></p>
                         </div>
                         <x-ui.button size="lg" class="w-full" @click="completeSale()"
                             x-bind:disabled="!canComplete">

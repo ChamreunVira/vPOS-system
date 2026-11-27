@@ -12,50 +12,27 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Models\StockMovement;
 use App\Models\User;
+use App\Services\PaymentStrategyResolver;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class CreatePosOrderAction
 {
-    /**
-     * Process checkout and persist the POS order atomically.
-     *
-     * @param  array{
-     *     items: array<int, array{product_id: int, quantity: numeric}>,
-     *     customer_id: ?int,
-     *     discount_percent: numeric,
-     *     payment_method: string,
-     *     amount_received: ?numeric
-     * }  $data
-     * @return array{
-     *     receipt: array{
-     *         number: string,
-     *         placedAt: string,
-     *         customer: string,
-     *         lines: array<int, array{id: int, name: string, quantity: numeric, price: numeric, lineTotal: numeric}>,
-     *         subtotal: numeric,
-     *         discountPercent: numeric,
-     *         discountAmount: numeric,
-     *         vatAmount: numeric,
-     *         total: numeric,
-     *         method: string,
-     *         received: numeric,
-     *         change: numeric
-     *     },
-     *     stock: array<int, numeric>
-     * }
-     *
-     * @throws ValidationException
-     */
+    public function __construct(
+        private PaymentStrategyResolver $paymentResolver
+    ) {}
+
     public function execute(array $data, User $cashier): array
     {
         $cashierId = $cashier->getAuthIdentifier();
 
         return DB::transaction(function () use ($data, $cashierId): array {
+
             $productIds = collect($data['items'])
                 ->pluck('product_id')
                 ->map(fn ($id): int => (int) $id)
+                ->unique()
                 ->sort()
                 ->values();
 
@@ -67,7 +44,15 @@ class CreatePosOrderAction
                 ->get()
                 ->keyBy('id');
 
+            // Ensure all requested products exist.
+            if ($products->count() !== $productIds->count()) {
+                throw ValidationException::withMessages([
+                    'items' => 'One or more selected products do not exist.',
+                ]);
+            }
+
             $customer = null;
+
             if (! empty($data['customer_id'])) {
                 $customer = Customer::query()
                     ->whereKey($data['customer_id'])
@@ -82,10 +67,20 @@ class CreatePosOrderAction
             }
 
             $discountPercent = (float) $data['discount_percent'];
-            $vatEnabled = (bool) Setting::get('currency.vat_enabled', config('vpos.vat_rate', 0) > 0);
+
+            $vatEnabled = (bool) Setting::get(
+                'currency.vat_enabled',
+                config('vpos.vat_rate', 0) > 0
+            );
+
             $taxRate = $vatEnabled ? (float) Setting::get('currency.vat_rate', config('vpos.vat_rate', 0)) : 0.0;
 
-            $cart = CartCalculator::process($data['items'], $products, $discountPercent, $taxRate);
+            $cart = CartCalculator::process(
+                $data['items'],
+                $products,
+                $discountPercent,
+                $taxRate
+            );
 
             $lineItems = $cart['line_items'];
             $subtotal = $cart['subtotal'];
@@ -94,32 +89,36 @@ class CreatePosOrderAction
             $total = $cart['total'];
 
             $paymentCode = $data['payment_method'];
-            $paymentLabels = ['cash' => 'Cash', 'khqr' => 'KHQR', 'card' => 'Card'];
-            $paymentMethod = PaymentMethod::query()->firstOrCreate(
-                ['code' => $paymentCode],
-                ['name' => $paymentLabels[$paymentCode] ?? ucfirst($paymentCode), 'is_enable' => true],
-            );
 
-            if (! $paymentMethod->is_enable) {
+            $paymentMethod = PaymentMethod::query()
+                ->where('code', $paymentCode)
+                ->where('is_enable', true)
+                ->first();
+
+            if (! $paymentMethod) {
                 throw ValidationException::withMessages([
-                    'payment_method' => 'This payment method is disabled.',
+                    'payment_method' => 'This payment method is unavailable.',
                 ]);
             }
 
-            $received = $paymentCode === 'cash' ? round((float) $data['amount_received'], 2) : $total;
-            if ($paymentCode === 'cash' && $received < $total) {
-                throw ValidationException::withMessages([
-                    'amount_received' => 'The amount received must cover the total.',
-                ]);
-            }
-            $change = CartCalculator::change($received, $total);
+            $strategy = $this->paymentResolver->resolver($paymentCode);
+
+            $paymentResult = $strategy->process($total, $data);
+
+            $received = $paymentResult['received'];
+            $change = $paymentResult['change'];
+
             $now = now();
 
             $order = Order::create([
                 'order_number' => 'pending-'.Str::ulid(),
                 'customer_id' => $customer?->id,
                 'cashier_id' => $cashierId,
-                'status' => 'completed',
+
+                'status' => $paymentResult['status'] === 'paid'
+                    ? 'completed'
+                    : 'pending',
+
                 'subtotal' => $subtotal,
                 'discount_percent' => $discountPercent,
                 'discount_amount' => $discountAmount,
@@ -128,17 +127,33 @@ class CreatePosOrderAction
                 'total' => $total,
                 'place_at' => $now,
             ]);
-            $orderNumber = 'INV-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT);
-            $order->update(['order_number' => $orderNumber]);
+
+            // Generate invoice number using order ID.
+            $orderNumber = 'INV-'.str_pad(
+                (string) $order->id,
+                6,
+                '0',
+                STR_PAD_LEFT
+            );
+
+            $order->update([
+                'order_number' => $orderNumber,
+            ]);
 
             $receiptLines = [];
             $stockBalances = [];
 
             foreach ($lineItems as $lineItem) {
+
                 /** @var Product $product */
                 $product = $lineItem['product'];
+
                 $quantity = $lineItem['quantity'];
-                $balance = round((float) $product->stock - $quantity, 2);
+
+                $balance = round(
+                    (float) $product->stock - $quantity,
+                    2
+                );
 
                 $orderItem = OrderItem::create([
                     'order_id' => $order->id,
@@ -151,7 +166,9 @@ class CreatePosOrderAction
                     'line_total' => $lineItem['line_total'],
                 ]);
 
-                $product->update(['stock' => $balance]);
+                $product->update([
+                    'stock' => $balance,
+                ]);
 
                 StockMovement::create([
                     'product_id' => $product->id,
@@ -172,17 +189,21 @@ class CreatePosOrderAction
                     'price' => $lineItem['price'],
                     'lineTotal' => $lineItem['line_total'],
                 ];
+
                 $stockBalances[$product->id] = $balance;
             }
 
             Payment::create([
                 'order_id' => $order->id,
                 'payment_method_id' => $paymentMethod->id,
-                'amount' => $total,
+                'amount' => $paymentResult['amount'],
                 'refunded_amount' => 0,
-                'reference' => 'PAY-'.$order->id,
-                'status' => 'paid',
-                'paid_at' => $now,
+
+                'reference' => $paymentResult['reference']
+                    ?? 'PAY-'.$order->id,
+
+                'status' => $paymentResult['status'],
+                'paid_at' => $paymentResult['paid_at'],
             ]);
 
             return [
@@ -190,16 +211,23 @@ class CreatePosOrderAction
                     'number' => $orderNumber,
                     'placedAt' => $now->format('d M Y, H:i'),
                     'customer' => $customer?->name ?? 'Walk-in customer',
+
                     'lines' => $receiptLines,
+
                     'subtotal' => $subtotal,
                     'discountPercent' => $discountPercent,
                     'discountAmount' => $discountAmount,
                     'vatAmount' => $taxAmount,
                     'total' => $total,
+
                     'method' => $paymentCode,
                     'received' => $received,
                     'change' => $change,
+
+                    'paymentStatus' => $paymentResult['status'],
+                    'orderStatus' => $order->status,
                 ],
+
                 'stock' => $stockBalances,
             ];
         }, 3);
